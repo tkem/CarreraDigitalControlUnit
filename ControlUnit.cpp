@@ -18,8 +18,21 @@
 
 using namespace cardiff;
 
+static const unsigned word_mask[10] = {
+    1 << 12,
+    1 << 9,
+    1 << 8,  // or 7 if no command sent to CU
+    1 << 9,
+    1 << 9,
+    1 << 9,
+    1 << 9,
+    1 << 9,
+    1 << 8,  // or 7 if no command sent to CU
+    1 << 9
+};
+
 ControlUnit::ControlUnit(PinName pin)
-    : _counter(0), _buffer(0), _sync(0), _irq(pin, this)
+    : _counter(0), _buffer(0), _index(0), _irq(pin, this)
 {
     _timer.start();
     _irq.rise(&ControlUnit::rise);
@@ -28,6 +41,7 @@ ControlUnit::ControlUnit(PinName pin)
 
 unsigned ControlUnit::read()
 {
+    // FIXME: remove counter?
     unsigned counter = _counter;
     while (counter == _counter)
         ;
@@ -42,19 +56,25 @@ void ControlUnit::emit(unsigned data)
 
 void ControlUnit::fall()
 {
-    // TODO: emit without waiting for 6ms timeout (e.g. keep frame index after sync)
     // TODO: handle data packets sent to CU, i.e. at t ~ 2300
     int t = _timer.read_us();
     if (t > 75 && t < 125) {
         _buffer <<= 1;
         _buffer |= 1;
+        if (_buffer & word_mask[_index]) {
+            emit(_buffer);
+            _buffer = 0;
+            _index = (_index + 1) % 10;
+        }
         _timer.reset();
     } else if (t > 6000) {
-        if ((_buffer & ~0xfff) == 0x1000) {
-            _sync = true;
-        }
-        if (_sync) {
-            emit(_buffer);
+        if (_buffer) {
+            if (_index == 2 || _index == 8) {
+                emit(_buffer);
+                ++_index;
+            } else {
+                _index = 0;  // lost sync
+            }
         }
         _buffer = 1;
         _timer.reset();
@@ -66,6 +86,11 @@ void ControlUnit::rise()
     int t = _timer.read_us();
     if (t > 75 && t < 125) {
         _buffer <<= 1;
+        if (_buffer & word_mask[_index]) {
+            emit(_buffer);
+            _buffer = 0;
+            _index = (_index + 1) % 10;
+        }
         _timer.reset();
     }
 }

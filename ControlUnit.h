@@ -26,7 +26,7 @@ namespace cardiff {
 
         Timer _timer;
         unsigned _buffer;
-        bool _sync;
+        unsigned _index;
 
         EdgeInterrupt<ControlUnit> _irq;
 
