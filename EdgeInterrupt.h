@@ -16,35 +16,36 @@
 #ifndef CARDIFF_EDGE_INTERRUPT_H
 #define CARDIFF_EDGE_INTERRUPT_H
 
-#ifdef __MBED__
+#if defined(__MBED__)
 #include "mbed.h"
-#else
+#elif defined(ARDUINO)
 #include "Arduino.h"
+#else
+#error "Not an mbed or Arduino platform"
 #endif
 
 namespace cardiff {
+#ifdef ARDUINO
+    typedef int PinName;
+#endif
+
     template<class T>
     class EdgeInterrupt {
+        T* _obj;
 #ifdef __MBED__
         InterruptIn _pin;
 #else
-        typedef int PinName;
         PinName _pin;
-        T* _obj;
         void (T::*_rise)();
         void (T::*_fall)();
         static EdgeInterrupt* _instance;
 #endif
     public:
-        EdgeInterrupt(int pin, T* obj, void(T::*rise)(), void(T::*fall)()): _pin((PinName)pin) {
-#ifdef __MBED__
-            _pin.rise(callback(obj, rise));
-            _pin.fall(callback(obj, fall));
-#else
-            _instance = this;
-            _obj = obj;
-            _rise = rise;
-            _fall = fall;
+    EdgeInterrupt(PinName pin, T* obj): _obj(obj), _pin(pin) {
+#ifdef ARDUINO
+            _instance = this;  // FIXME: single instance per callback object!
+            _rise = 0;
+            _fall = 0;
             pinMode(pin, INPUT);
             attachInterrupt(digitalPinToInterrupt(pin), &isr, CHANGE);
 #endif
@@ -56,21 +57,39 @@ namespace cardiff {
 #endif
         }
 
+        void rise(void(T::*method)()) {
+#ifdef __MBED__
+            _pin.rise(callback(_obj, method));
+#else
+            _rise = method;
+#endif
+        }
+
+        void fall(void(T::*method)()) {
+#ifdef __MBED__
+            _pin.fall(callback(_obj, method));
+#else
+            _fall = method;
+#endif
+        }
+
     private:
 #ifdef ARDUINO
         static void isr() {
             if (digitalRead(_instance->_pin) == LOW) {
-                (_instance->_obj->*_instance->_fall)();
+                if (_instance->_fall) {
+                    (_instance->_obj->*_instance->_fall)();
+                }
             } else {
-                (_instance->_obj->*_instance->_rise)();
+                if (_instance->_rise) {
+                    (_instance->_obj->*_instance->_rise)();
+                }
             }
         }
 #endif
-
     };
 
 #ifdef ARDUINO
-    // FIXME: single instance per callback class!
     template<class T>
     EdgeInterrupt<T>* EdgeInterrupt<T>::_instance = 0;
 #endif

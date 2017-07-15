@@ -16,10 +16,12 @@
 #ifndef CARDIFF_TIMER_H
 #define CARDIFF_TIMER_H
 
-#ifdef __MBED__
+#if defined(__MBED__)
 #include "mbed.h"
-#else
+#elif defined(ARDUINO)
 #include "Arduino.h"
+#else
+#error "Not an mbed or Arduino platform"
 #endif
 
 namespace cardiff {

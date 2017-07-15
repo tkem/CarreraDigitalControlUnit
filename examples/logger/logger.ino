@@ -16,10 +16,23 @@
 
 #include <cardiff.h>
 
-void print_prog(unsigned word) {
+static inline int lsb3(int v) {
+    return ((v & 0x1) << 2) | (v & 0x2) | ((v & 0x4) >> 2);
+}
+
+static inline int lsb4(int v) {
+    return ((v & 0x1) << 3) | (v & 0x2) << 1 | (v & 0x4) >> 1 | ((v & 0x8) >> 3);
+}
+
+static inline int lsb5(int v) {
+    return ((v & 0x1) << 4) | (v & 0x2) << 2 | (v & 0x4) | (v & 0x8) >> 2 | ((v & 0x10) >> 4);
+}
+
+void print_prog(unsigned word)
+{
     Serial.print("PROG: ");
     Serial.print(word, HEX);
-    Serial.print(" B=");
+    Serial.print("\t B=");
     Serial.print(lsb5(word >> 3));
     Serial.print(" W=");
     Serial.print(lsb4(word >> 8));
@@ -28,10 +41,11 @@ void print_prog(unsigned word) {
     Serial.println();
 }
 
-void print_ctrl(unsigned word) {
+void print_ctrl(unsigned word)
+{
     Serial.print("CTRL: ");
     Serial.print(word, HEX);
-    Serial.print(" R=");
+    Serial.print("\t R=");
     Serial.print((word >> 6) & 0x7);
     Serial.print(" SW=");
     Serial.print(!!(word & 0x20));
@@ -42,10 +56,11 @@ void print_ctrl(unsigned word) {
     Serial.println();
 }
 
-void print_pace(unsigned word) {
+void print_pace(unsigned word)
+{
     Serial.print("PACE: ");
     Serial.print(word, HEX);
-    Serial.print(" KFR=");
+    Serial.print("\t KFR=");
     Serial.print(!!(word & 0x20));
     Serial.print(" TK=");
     Serial.print(!!(word & 0x10));
@@ -60,9 +75,58 @@ void print_pace(unsigned word) {
     Serial.println();
 }
 
+void print_ack(unsigned word)
+{
+    Serial.print("ACK:  ");
+    Serial.print(word, HEX);
+    Serial.print("\t S=");
+    Serial.print(word & 0xff, BIN);
+    Serial.println();
+}
+
+void print_act(unsigned word)
+{
+    Serial.print("ACT:  ");
+    Serial.print(word, HEX);
+    Serial.print("\t R=");
+    Serial.print((word >> 1) & 0x3f, BIN);
+    Serial.print(" IE=");
+    Serial.print(!!(word & 0x1));
+    Serial.println();
+}
+
+void print_inv(unsigned word)
+{
+    Serial.print("???:  ");
+    Serial.print(word, HEX);
+    Serial.println();
+}
+
+void print_word(unsigned word)
+{
+    if (word & ~0x1fff) {
+        print_inv(word);
+    } else if (word & 0x1000) {
+        print_prog(word);
+    } else if (word & 0xc00) {
+        print_inv(word);
+    } else if ((word & 0x3c0) == 0x3c0) {
+        print_pace(word);
+    } else if (word & 0x200) {
+        print_ctrl(word);
+    } else if (word & 0x100) {
+        print_ack(word);
+    } else if (word & 0x80) {
+        print_act(word);
+    } else {
+        print_inv(word);
+    }
+}
+
 ControlUnit cu(2);
 
-//#define PROG_ONLY
+#define WORD_MASK ~0
+//#define WORD_MASK 0x1000 // only PROG words
 
 void setup()
 {
@@ -72,30 +136,8 @@ void setup()
 
 void loop()
 {
-#ifndef PROG_ONLY
-    static unsigned words[10];
-    static unsigned count = 0;
-#endif
     unsigned word = cu.read();
-#ifdef PROG_ONLY
-    if (word & 0x1000) {
-        print_prog(word);
+    if (word & WORD_MASK) {
+        print_word(word);
     }
-#else
-    if (word & 0x1000) {
-        count = 0;
-    }
-    words[count++] = word;
-    if (count == 10) {
-        print_prog(words[0]);
-        print_pace(words[1]);
-        print_ctrl(words[3]);
-        print_ctrl(words[4]);
-        print_ctrl(words[5]);
-        print_ctrl(words[6]);
-        print_ctrl(words[7]);
-        print_ctrl(words[9]);
-        count = 0;
-    }
-#endif
 }

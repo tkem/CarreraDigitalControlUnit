@@ -21,27 +21,28 @@
 
 namespace cardiff {
     class ControlUnit {
-        EdgeInterrupt<ControlUnit> _irq;
+        volatile unsigned _data;
+        volatile unsigned _counter;
+
         Timer _timer;
-        unsigned _word;
-        volatile unsigned _newword;
-        volatile bool _changed;
+        unsigned _buffer;
+        bool _sync;
+
+        EdgeInterrupt<ControlUnit> _irq;
 
     public:
-        ControlUnit(int pin);
+        ControlUnit(PinName pin);
 
         unsigned read();
 
     private:
-        void rise() {
-            decode(true);
-        }
+        void emit(unsigned data);
+        void rise();
+        void fall();
 
-        void fall() {
-            decode(false);
-        }
-
-        void decode(bool rising);
+    private:
+        ControlUnit(const ControlUnit&);
+        ControlUnit& operator=(const ControlUnit&);
     };
 }
 

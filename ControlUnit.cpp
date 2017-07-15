@@ -18,33 +18,54 @@
 
 using namespace cardiff;
 
-ControlUnit::ControlUnit(int pin)
-    : _irq(pin, this, &ControlUnit::rise, &ControlUnit::fall)
+ControlUnit::ControlUnit(PinName pin)
+    : _counter(0), _buffer(0), _sync(0), _irq(pin, this)
 {
-    _word = 0;
-    _changed = false;
     _timer.start();
+    _irq.rise(&ControlUnit::rise);
+    _irq.fall(&ControlUnit::fall);
 }
 
 unsigned ControlUnit::read()
 {
-    while (!_changed)
+    unsigned counter = _counter;
+    while (counter == _counter)
         ;
-    _changed = false;
-    return _newword;
+    return _data;
 }
 
-void ControlUnit::decode(bool rising)
+void ControlUnit::emit(unsigned data)
+{
+    _data = data;
+    ++_counter;
+}
+
+void ControlUnit::fall()
+{
+    // TODO: emit without waiting for 6ms timeout (e.g. keep frame index after sync)
+    // TODO: handle data packets sent to CU, i.e. at t ~ 2300
+    int t = _timer.read_us();
+    if (t > 75 && t < 125) {
+        _buffer <<= 1;
+        _buffer |= 1;
+        _timer.reset();
+    } else if (t > 6000) {
+        if ((_buffer & ~0xfff) == 0x1000) {
+            _sync = true;
+        }
+        if (_sync) {
+            emit(_buffer);
+        }
+        _buffer = 1;
+        _timer.reset();
+    }
+}
+
+void ControlUnit::rise()
 {
     int t = _timer.read_us();
     if (t > 75 && t < 125) {
-        _word <<= 1;
-        _word |= rising ? 0 : 1;
-        _timer.reset();
-    } else if (t > 6000) {
-        _newword = _word;
-        _word = 1;
-        _changed = true;
+        _buffer <<= 1;
         _timer.reset();
     }
 }

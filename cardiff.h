@@ -17,8 +17,8 @@
 #define CARDIFF_H
 
 #include "ControlUnit.h"
-#include "util.h"
 
+// FIXME: depending on Arduino/mbed conventions
 using cardiff::ControlUnit;
 
 #endif
