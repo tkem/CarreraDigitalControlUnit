@@ -32,26 +32,26 @@ static const unsigned word_mask[10] = {
 };
 
 ControlUnit::ControlUnit(PinName pin)
-    : _counter(0), _buffer(0), _index(0), _irq(pin, this)
+    : _buffer(0), _index(0), _irq(pin)
 {
     _timer.start();
-    _irq.rise(&ControlUnit::rise);
-    _irq.fall(&ControlUnit::fall);
+    _irq.rise(callback(this, &ControlUnit::rise));
+    _irq.fall(callback(this, &ControlUnit::fall));
 }
 
 unsigned ControlUnit::read()
 {
-    // FIXME: remove counter?
-    unsigned counter = _counter;
-    while (counter == _counter)
+    bool clock = _clock;
+    while (clock == _clock)
         ;
+    // *not* atomic on 8-bit microcontrollers, but probably good enough for now
     return _data;
 }
 
 void ControlUnit::emit(unsigned data)
 {
     _data = data;
-    ++_counter;
+    _clock = !_clock;
 }
 
 void ControlUnit::fall()

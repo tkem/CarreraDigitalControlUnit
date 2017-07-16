@@ -13,38 +13,25 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-#ifndef CARDIFF_CONTROL_UNIT_H
-#define CARDIFF_CONTROL_UNIT_H
+#ifndef CARDIFF_MBED_PIN_MODE_H
+#define CARDIFF_MBED_PIN_MODE_H
 
-#include "mbedInterruptIn.h"
-#include "mbedPinName.h"
-#include "mbedTimer.h"
+#if defined(__MBED__)
+#include "mbed.h"
+#elif defined(ARDUINO)
+#include "Arduino.h"
+#else
+#error "Not an mbed or Arduino platform"
+#endif
 
+#ifdef ARDUINO
 namespace cardiff {
-    class ControlUnit {
-        volatile unsigned _data;
-        volatile bool _clock;
-
-        Timer _timer;
-        unsigned _buffer;
-        unsigned _index;
-
-        InterruptIn _irq;
-
-    public:
-        ControlUnit(PinName pin);
-
-        unsigned read();
-
-    private:
-        void emit(unsigned data);
-        void rise();
-        void fall();
-
-    private:
-        ControlUnit(const ControlUnit&);
-        ControlUnit& operator=(const ControlUnit&);
+    enum PinMode {
+        PullUp = INPUT_PULLUP,
+        PullNone = INPUT,
+        PullDefault = PullNone
     };
 }
+#endif
 
 #endif

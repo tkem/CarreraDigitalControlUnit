@@ -13,35 +13,17 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-#ifndef CARDIFF_TIMER_H
-#define CARDIFF_TIMER_H
+#ifndef CARDIFF_MBED_PIN_NAME_H
+#define CARDIFF_MBED_PIN_NAME_H
 
 #if defined(__MBED__)
 #include "mbed.h"
-#elif defined(ARDUINO)
-#include "Arduino.h"
 #else
-#error "Not an mbed or Arduino platform"
-#endif
 
 namespace cardiff {
-#ifdef __MBED__
-    typedef ::Timer Timer;
-#else
-    class Timer {
-        unsigned long _micros;
-    public:
-        void start() {
-            _micros = micros();
-        }
-        void reset() {
-            _micros = micros();
-        }
-        unsigned read_us() {
-            return micros() - _micros;
-        }
-    };
-#endif
+    typedef int PinName;
 }
+
+#endif
 
 #endif
