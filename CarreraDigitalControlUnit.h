@@ -13,17 +13,30 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-#ifndef CARDIFF_MBED_PIN_NAME_H
-#define CARDIFF_MBED_PIN_NAME_H
+#ifndef CARRERA_DIGITAL_CONTROL_UNIT_H
+#define CARRERA_DIGITAL_CONTROL_UNIT_H
 
-#if defined(__MBED__)
-#include "mbed.h"
-#else
+#include <mbed.h>
 
-namespace cardiff {
-    typedef int PinName;
-}
+class CarreraDigitalControlUnit {
+    volatile uint16_t _data;
+    volatile bool _clk;
 
-#endif
+    Timer _timer;
+    unsigned _buffer;
+    unsigned _index;
+
+    InterruptIn _irq;
+
+public:
+    CarreraDigitalControlUnit(PinName pin);
+
+    uint16_t read();
+
+private:
+    void emit(unsigned data);
+    void rise();
+    void fall();
+};
 
 #endif

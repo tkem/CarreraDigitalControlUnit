@@ -30,3 +30,9 @@
 *.exe
 *.out
 *.app
+
+# mbed-cli
+.mbed
+BUILD/
+mbed_settings.py
+mbed_settings.pyc

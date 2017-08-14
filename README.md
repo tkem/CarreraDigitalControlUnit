@@ -1,4 +1,4 @@
-# cardiff
+# CarreraDigitalControlUnit
 
 Carrera® DIGITAL 124/132 C++ interface library for Arduino/mbed.
 
@@ -19,8 +19,8 @@ Licensed under the [Apache License, Version
 Carrera® is a registered trademark of Stadlbauer Marketing + Vertrieb
 GmbH.
 
-cardiff is not an official Carrera® product, and is not affiliated
-with or endorsed by Stadlbauer Marketing + Vertrieb GmbH.
+This is not an official Carrera® product, and is not affiliated with
+or endorsed by Stadlbauer Marketing + Vertrieb GmbH.
 
 Thanks to [Stephan Heß](http://www.slotbaer.de/) and [Peter
 Niehues](http://www.wasserstoffe.de/carrera-hacks/) for doing all the

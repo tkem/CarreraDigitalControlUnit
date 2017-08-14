@@ -13,10 +13,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 */
-
-#include "ControlUnit.h"
-
-using namespace cardiff;
+#include "CarreraDigitalControlUnit.h"
 
 static const unsigned word_mask[10] = {
     1 << 12,
@@ -31,30 +28,35 @@ static const unsigned word_mask[10] = {
     1 << 9
 };
 
-ControlUnit::ControlUnit(PinName pin)
+CarreraDigitalControlUnit::CarreraDigitalControlUnit(PinName pin)
     : _buffer(0), _index(0), _irq(pin)
 {
+    // TODO: delegate this to start() method
     _timer.start();
-    _irq.rise(callback(this, &ControlUnit::rise));
-    _irq.fall(callback(this, &ControlUnit::fall));
+    _irq.rise(callback(this, &CarreraDigitalControlUnit::rise));
+    _irq.fall(callback(this, &CarreraDigitalControlUnit::fall));
 }
 
-unsigned ControlUnit::read()
+uint16_t CarreraDigitalControlUnit::read()
 {
-    bool clock = _clock;
-    while (clock == _clock)
+    uint16_t data;
+    uint8_t clk = _clk;
+    while (clk == _clk)
         ;
-    // *not* atomic on 8-bit microcontrollers, but probably good enough for now
-    return _data;
+    // 16-bit reads are *not* atomic on 8-bit platforms
+    do {
+        data = _data;
+    } while (data != _data);
+    return data;
 }
 
-void ControlUnit::emit(unsigned data)
+void CarreraDigitalControlUnit::emit(unsigned data)
 {
     _data = data;
-    _clock = !_clock;
+    _clk = !_clk;
 }
 
-void ControlUnit::fall()
+void CarreraDigitalControlUnit::fall()
 {
     // TODO: handle data packets sent to CU, i.e. at t ~ 2300
     int t = _timer.read_us();
@@ -81,7 +83,7 @@ void ControlUnit::fall()
     }
 }
 
-void ControlUnit::rise()
+void CarreraDigitalControlUnit::rise()
 {
     int t = _timer.read_us();
     if (t > 75 && t < 125) {
