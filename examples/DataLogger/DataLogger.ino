@@ -131,3 +131,12 @@ void loop()
         out << "???:  " << data << "\r\n";
     }
 }
+
+#ifndef ARDUINO
+int main() {
+    setup();
+    for (;;) {
+        loop();
+    }
+}
+#endif
