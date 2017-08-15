@@ -1,4 +1,4 @@
-# CarreraDigitalControlUnit
+# CarreraDigitalControlUnit  [![Build Status](https://travis-ci.org/tkem/CarreraDigitalControlUnit.svg?branch=master)](https://travis-ci.org/tkem/CarreraDigitalControlUnit/)
 
 Carrera® DIGITAL 124/132 C++ interface library for Arduino/mbed.
 
