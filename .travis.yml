@@ -9,12 +9,10 @@ install:
 - platformio lib --global install mbino
 
 env:
-- BOARD=uno
-- BOARD=leonardo
-- BOARD=megaatmega2560
+- PLATFORMIO_CI_SRC=examples/DataLogger
+- PLATFORMIO_CI_SRC=examples/StartLight
 
 script:
-- set -eo pipefail;
-  for e in examples/*/*.ino; do
-    platformio ci --board=$BOARD --lib=. $e;
-  done
+- platformio ci --board=uno --board=leonardo --lib=".";
+  mv "$PLATFORMIO_CI_SRC/"*.ino "$PLATFORMIO_CI_SRC"/$(basename "$PLATFORMIO_CI_SRC"/*.ino .ino).cpp;
+  platformio ci --board=nucleo_f446re --lib="src"

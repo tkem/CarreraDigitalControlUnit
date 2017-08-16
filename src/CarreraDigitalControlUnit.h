@@ -19,22 +19,29 @@
 #include <mbed.h>
 
 class CarreraDigitalControlUnit {
-    volatile uint16_t _data;
-    volatile bool _clk;
-
-    Timer _timer;
-    unsigned _buffer;
-    unsigned _index;
-
     InterruptIn _irq;
+    bool _running;
+
+    uint32_t _time;
+    uint16_t _buffer;
+    uint8_t _index;
+
+    volatile bool _clk;
+    volatile int _data;
 
 public:
-    CarreraDigitalControlUnit(PinName pin);
+    CarreraDigitalControlUnit(PinName pin) : _irq(pin), _running(false) {}
 
-    uint16_t read();
+    void start();
+
+    void stop();
+
+    void reset();
+
+    int read();
 
 private:
-    void emit(unsigned data);
+    void emit(int data);
     void rise();
     void fall();
 };

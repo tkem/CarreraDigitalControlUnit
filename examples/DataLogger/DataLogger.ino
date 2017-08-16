@@ -13,6 +13,8 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
+#include <mbed.h>
+
 #include "CarreraDigitalControlUnit.h"
 
 // printf() is fine for debugging, but we need something more
@@ -49,63 +51,64 @@ public:
 
     DataLogger& operator<<(uint16_t v) {
         static const char hex[] = "0123456789abcdef";
-        _serial.putc(hex[v >> 12]);
+        _serial.putc(hex[(v >> 12) & 0xf]);
         _serial.putc(hex[(v >> 8) & 0xf]);
         _serial.putc(hex[(v >> 4) & 0xf]);
         _serial.putc(hex[v & 0xf]);
+        _serial.putc('h');  // hex
         return *this;
     }
 };
 
+DataLogger out(USBTX, USBRX);
+
+// set digital pin 2 as input - make sure it does not deliver more
+// than 5V or 3.3V, depending on platform!
+CarreraDigitalControlUnit cu(D2);
+
 // TODO: more efficient implementation?
-inline uint8_t lsb3(uint8_t v) {
+inline uint8_t lsb3(int v) {
     return ((v & 0x1) << 2) | (v & 0x2) | ((v & 0x4) >> 2);
 }
 
-inline uint8_t lsb4(uint8_t v) {
+inline uint8_t lsb4(int v) {
     return ((v & 0x1) << 3) | (v & 0x2) << 1 | (v & 0x4) >> 1 | ((v & 0x8) >> 3);
 }
 
-inline uint8_t lsb5(uint8_t v) {
+inline uint8_t lsb5(int v) {
     return ((v & 0x1) << 4) | (v & 0x2) << 2 | (v & 0x4) | (v & 0x8) >> 2 | ((v & 0x10) >> 4);
 }
 
-inline uint8_t msb3(uint8_t v) {
+inline uint8_t msb3(int v) {
     return v & 0x7;
 }
 
-inline uint8_t msb4(uint8_t v) {
+inline uint8_t msb4(int v) {
     return v & 0xf;
 }
 
-inline uint8_t msb5(uint8_t v) {
+inline uint8_t msb5(int v) {
     return v & 0xf;
 }
 
-DataLogger out(USBTX, USBRX);
-
-CarreraDigitalControlUnit cu(D2);
-
-void setup()
-{
-    // TODO: start
+void setup() {
+    cu.start();
 }
 
-void loop()
-{
-    uint16_t data = cu.read();
+void loop() {
+    int data = cu.read();
     if (data & ~0x1fff) {
-        out << "???:  " << data << "\r\n";
+        out << "???:  " << uint16_t(data) << "\r\n";
     } else if (data & 0x1000) {
-        out << "PROG: " << data
+        out << "PROG: " << uint16_t(data)
             << " B=" << lsb5(data >> 3)
             << " W=" << lsb4(data >> 8)
             << " R=" << lsb3(data)
             << "\r\n";
     } else if (data & 0xc00) {
-        out << "???:  " << data << "\r\n";
+        out << "???:  " << uint16_t(data) << "\r\n";
     } else if ((data & 0x3c0) == 0x3c0) {
-        out << "PACE: " << data
+        out << "PACE: " << uint16_t(data)
             << " KFR=" << !!(data & 0x20)
             << " TK=" << !!(data & 0x10)
             << " FR=" << !!(data & 0x8)
@@ -114,21 +117,21 @@ void loop()
             << " TA=" << !!(data & 0x1)
             << "\r\n";
     } else if (data & 0x200) {
-        out << "CTRL: " << data
+        out << "CTRL: " << uint16_t(data)
             << " R=" << msb3(data >> 6)
             << " SW=" << !!(data & 0x20)
             << " G=" << msb4(data >> 1)
             << " TA=" << !!(data & 0x1)
             << "\r\n";
     } else if (data & 0x100) {
-        out << "ACK:  " << data << "\r\n";
+        out << "ACK:  " << uint16_t(data) << "\r\n";
     } else if (data & 0x80) {
-        out << "ACT:  " << data
+        out << "ACT:  " << uint16_t(data)
             << " R=" << uint16_t((data >> 1) & 0x3f)
             << " IE=" << !!(data & 0x1)
             << "\r\n";
     } else {
-        out << "???:  " << data << "\r\n";
+        out << "???:  " << uint16_t(data) << "\r\n";
     }
 }
 
