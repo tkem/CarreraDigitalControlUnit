@@ -61,12 +61,3 @@ void loop() {
         }
     }
 }
-
-#ifndef ARDUINO
-int main() {
-    setup();
-    for (;;) {
-        loop();
-    }
-}
-#endif

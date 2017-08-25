@@ -13,6 +13,5 @@ env:
 - PLATFORMIO_CI_SRC=examples/StartLight
 
 script:
-- platformio ci --board=uno --board=leonardo --lib=".";
-  mv "$PLATFORMIO_CI_SRC/"*.ino "$PLATFORMIO_CI_SRC"/$(basename "$PLATFORMIO_CI_SRC"/*.ino .ino).cpp;
-  platformio ci --board=nucleo_f446re --lib="src"
+- platformio ci --lib="." --board=uno --board=leonardo
+- platformio ci --lib="src" --board=nucleo_f446re

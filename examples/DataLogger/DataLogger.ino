@@ -134,12 +134,3 @@ void loop() {
         out << "???:  " << uint16_t(data) << "\r\n";
     }
 }
-
-#ifndef ARDUINO
-int main() {
-    setup();
-    for (;;) {
-        loop();
-    }
-}
-#endif
