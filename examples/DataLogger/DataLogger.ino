@@ -24,7 +24,7 @@ class DataLogger {
 
 public:
     template<class TX, class RX>
-    DataLogger(TX tx, RX rx, long baud = 115200) : _serial(tx, rx, baud) {}
+    DataLogger(TX tx, RX rx, long baud) : _serial(tx, rx, baud) {}
 
     DataLogger& operator<<(const char* s) {
         _serial.puts(s);
@@ -60,77 +60,55 @@ public:
     }
 };
 
-DataLogger out(USBTX, USBRX);
+DataLogger out(USBTX, USBRX, 115200);
 
 // set digital pin 2 as input - make sure it does not deliver more
 // than 5V or 3.3V, depending on platform!
 CarreraDigitalControlUnit cu(D2);
-
-// TODO: more efficient implementation?
-inline uint8_t lsb3(int v) {
-    return ((v & 0x1) << 2) | (v & 0x2) | ((v & 0x4) >> 2);
-}
-
-inline uint8_t lsb4(int v) {
-    return ((v & 0x1) << 3) | (v & 0x2) << 1 | (v & 0x4) >> 1 | ((v & 0x8) >> 3);
-}
-
-inline uint8_t lsb5(int v) {
-    return ((v & 0x1) << 4) | (v & 0x2) << 2 | (v & 0x4) | (v & 0x8) >> 2 | ((v & 0x10) >> 4);
-}
-
-inline uint8_t msb3(int v) {
-    return v & 0x7;
-}
-
-inline uint8_t msb4(int v) {
-    return v & 0xf;
-}
-
-inline uint8_t msb5(int v) {
-    return v & 0xf;
-}
 
 void setup() {
     cu.start();
 }
 
 void loop() {
+    uint8_t values[4];  // maximum number of components
     int data = cu.read();
-    if (data & ~0x1fff) {
-        out << "???:  " << uint16_t(data) << "\r\n";
-    } else if (data & 0x1000) {
-        out << "PROG: " << uint16_t(data)
-            << " B=" << lsb5(data >> 3)
-            << " W=" << lsb4(data >> 8)
-            << " R=" << lsb3(data)
-            << "\r\n";
-    } else if (data & 0xc00) {
-        out << "???:  " << uint16_t(data) << "\r\n";
-    } else if ((data & 0x3c0) == 0x3c0) {
-        out << "PACE: " << uint16_t(data)
-            << " KFR=" << !!(data & 0x20)
-            << " TK=" << !!(data & 0x10)
-            << " FR=" << !!(data & 0x8)
-            << " NH=" << !!(data & 0x4)
-            << " PC=" << !!(data & 0x2)
-            << " TA=" << !!(data & 0x1)
-            << "\r\n";
-    } else if (data & 0x200) {
-        out << "CTRL: " << uint16_t(data)
-            << " R=" << msb3(data >> 6)
-            << " SW=" << !!(data & 0x20)
-            << " G=" << msb4(data >> 1)
-            << " TA=" << !!(data & 0x1)
-            << "\r\n";
-    } else if (data & 0x100) {
-        out << "ACK:  " << uint16_t(data) << "\r\n";
-    } else if (data & 0x80) {
-        out << "ACT:  " << uint16_t(data)
-            << " R=" << uint16_t((data >> 1) & 0x3f)
-            << " IE=" << !!(data & 0x1)
-            << "\r\n";
+    if (cu.split_programming_word(data, values)) {
+        // values = { value, command, address }
+        out << uint16_t(data) << " [PROG:"
+            << " VALUE=" << values[0]
+            << " COMMAND=" << values[1]
+            << " ADDRESS=" << values[2]
+            << "]\r\n";
+    } else if (cu.split_controller_word(data, values)) {
+        // values = { address, speed, status }
+        out << uint16_t(data) << " [CTRL:"
+            << " ADDRESS=" << values[0]
+            << " SPEED=" << values[1]
+            << " BUTTON=" << values[2]
+            << " FUEL=" << values[3]
+            << "]\r\n";
+    } else if (cu.split_pacecar_word(data, values)) {
+        // values = { mode, box, active, fuel }
+        out << uint16_t(data) << " [PACE:"
+            << " MODE=" << values[0]
+            << " BOX=" << values[1]
+            << " ACTIVE=" << values[2]
+            << " FUEL=" << values[3]
+            << "]\r\n";
+    } else if (cu.split_acknowledge_word(data, values)) {
+        // values = { slot }
+        out << uint16_t(data) << " [ACK:"
+            << " SLOT=" << values[0]
+            << "]\r\n";
+    } else if (cu.split_active_word(data, values)) {
+        // values = { mask, any }
+        out << uint16_t(data) << " [ACT:"
+            << " MASK=" << values[0]
+            << " ANY=" << values[1]
+            << "]\r\n";
     } else {
-        out << "???:  " << uint16_t(data) << "\r\n";
+        out << uint16_t(data) << " [???]\r\n";
+        cu.reset();  // probably lost sync
     }
 }

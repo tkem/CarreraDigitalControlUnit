@@ -27,21 +27,24 @@ static const uint16_t emit_mask[10] = {
     1 << 9,
     1 << 9,
     1 << 9,
-    1 << 8,  // or 7 if no command was sent to CU
+    1 << 7,
     1 << 9
 };
 
-static inline int atomic_read_int(const volatile int* p) {
-#ifdef ARDUINO
-    // 16-bit reads are *not* atomic on 8-bit platforms
-    int v;
-    do {
-        v = *p;
-    } while (v != *p);
-    return v;
-#else
-    return *p;
-#endif
+static int rev12(int data)
+{
+    data = ((data & 0x555) << 1) | ((data >> 1) & 0x555);
+    data = ((data & 0x333) << 2) | ((data >> 2) & 0x333);
+    data = ((data & 0xf00) >> 8) | (data & 0x0f0) | ((data & 0x00f) << 8);
+    return data;
+}
+
+static uint8_t rev8(uint8_t data)
+{
+    data = ((data & 0x55) << 1) | ((data >> 1) & 0x55);
+    data = ((data & 0x33) << 2) | ((data >> 2) & 0x33);
+    data = ((data & 0xf0) >> 4) | ((data & 0x0f) << 4);
+    return data;
 }
 
 void CarreraDigitalControlUnit::start()
@@ -78,17 +81,26 @@ void CarreraDigitalControlUnit::reset()
 
 int CarreraDigitalControlUnit::read()
 {
-    // wait for new data to arrive
-    bool clk = _clk;
-    while (clk == _clk)
+    int data;
+    while (!_avail)
         ;
-    return atomic_read_int(&_data);
+#ifdef ARDUINO
+    // 16-bit reads are *not* atomic on 8-bit platforms
+    do {
+        data = _data;
+    } while (data != _data);
+#else
+    data = _data;
+#endif
+    _avail = false;
+    return data;
 }
 
-void CarreraDigitalControlUnit::emit(int data)
+void CarreraDigitalControlUnit::emit()
 {
-    _data = data;
-    _clk = !_clk;
+    _data = _buffer;
+    _buffer = 0;
+    _avail = true;
     if (++_index == 10) {
         _index = 0;
     }
@@ -106,14 +118,13 @@ void CarreraDigitalControlUnit::fall()
         _buffer <<= 1;
         _buffer |= 1;
         if (_buffer & emit_mask[_index]) {
-            emit(_buffer);
-            _buffer = 0;
+            emit();
         }
         _time = t;
     } else if (d > 6000) {
         if (_buffer) {
-            if (_index == 2 || _index == 8) {
-                emit(_buffer);
+            if (_index == 2) {
+                emit();  // no acknowledge, timeout
             } else {
                 _index = 0;  // lost sync
             }
@@ -125,14 +136,76 @@ void CarreraDigitalControlUnit::fall()
 
 void CarreraDigitalControlUnit::rise()
 {
+    // FIXME: skip if _buffer == 0?
     uint32_t t = us_ticker_read();
     uint32_t d = t - _time;
     if (d > 75 && d < 125) {
         _buffer <<= 1;
         if (_buffer & emit_mask[_index]) {
-            emit(_buffer);
-            _buffer = 0;
+            emit();
         }
         _time = t;
+    }
+}
+
+bool CarreraDigitalControlUnit::split_programming_word(int data, uint8_t res[3])
+{
+    if ((data & ~0xfff) == 0x1000) {
+        // programming word is LSB
+        data = rev12(data);
+        res[0] = data & 0x0f;
+        res[1] = (data >> 4) & 0x1f;
+        res[2] = (data >> 9) & 0x07;
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool CarreraDigitalControlUnit::split_pacecar_word(int data, uint8_t res[4])
+{
+    if ((data & ~0x3f) == 0x3c0) {
+        res[0] = (data >> 3) & 0x1;
+        res[1] = (data >> 2) & 0x1;
+        res[2] = (data >> 1) & 0x1;
+        res[3] = data & 0x1;
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool CarreraDigitalControlUnit::split_controller_word(int data, uint8_t res[4])
+{
+    if ((data & ~0x1ff) == 0x200 && (data >> 6) != 0xf) {
+        // controller word is MSB
+        res[0] = (data >> 6) & 0x7;
+        res[1] = (data >> 1) & 0xf;
+        res[2] = !(data & 0x20);
+        res[3] = data & 0x1;
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool CarreraDigitalControlUnit::split_acknowledge_word(int data, uint8_t res[1])
+{
+    if ((data & ~0xff) == 0x100) {
+        res[0] = rev8(data);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool CarreraDigitalControlUnit::split_active_word(int data, uint8_t res[2])
+{
+    if ((data & ~0x7f) == 0x80) {
+        res[0] = rev8(data >> 1) >> 2;
+        res[1] = data & 0x1;
+        return true;
+    } else {
+        return false;
     }
 }

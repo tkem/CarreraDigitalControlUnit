@@ -1,12 +1,28 @@
 # CarreraDigitalControlUnit  [![Build Status](https://travis-ci.org/tkem/CarreraDigitalControlUnit.svg?branch=master)](https://travis-ci.org/tkem/CarreraDigitalControlUnit/)
 
-Carrera® DIGITAL 124/132 C++ interface library for Arduino/mbed.
+This is a cross-platform library for Arduino and mbed OS for
+interfacing a microcontroller board with the Carrera® DIGITAL 124/132
+slot car racing system.  Data transmission uses a single pair of wires
+connected directly to the slot car tracks.  Be aware, though, that the
+Carrera® Control Unit provides 14.8V (D132) or 18V (D124), so you have
+to convert that to 5V or 3.3V, depending on your platform, or you will
+most certainly damage your hardware.  For starters, a voltage divider
+made of two resistors and an (optional but recommended) reverse
+polarity protection diode will do:
 
-This project is at a *very* early stage.  Currently, it is no more
-than a simple protocol logger loosely based on Peter Niehues' [Arduino
-decoder](http://www.wasserstoffe.de/carrera-hacks/protocol-decode/index.html).
+| ![Wiring](http://www.wasserstoffe.de/carrera-hacks/protocol-decode/carrera-decode-Steckplatine.png) |
+|:---:|
+| Image by [Peter Niehues](http://www.wasserstoffe.de/carrera-hacks/) [[CC BY-NC-SA](https://creativecommons.org/licenses/by-nc-sa/3.0/)] |
 
-You probably don't want to mess with this for now, but stay tuned...
+For cross-platform support, the [mbino](https://github.com/tkem/mbino)
+library must be installed when compiling for Arduino.
+
+This project is still at an early stage and documentation leaves a lot
+to be desired, so you best have a look at the existing
+[examples](examples) for now.  To make the most out of this, you
+should also make yourself familiar with the [CU data
+protocol](http://slotbaer.de/index.php/carrera-digital-124-132/9-cu-daten-protokoll)
+(available in German only).
 
 
 ## License

@@ -28,36 +28,21 @@ DigitalOut led3(D5);
 DigitalOut led4(D6);
 DigitalOut led5(D7);
 
-// TODO: more efficient implementation?
-inline uint8_t lsb3(int v) {
-    return ((v & 0x1) << 2) | (v & 0x2) | ((v & 0x4) >> 2);
-}
-
-inline uint8_t lsb4(int v) {
-    return ((v & 0x1) << 3) | (v & 0x2) << 1 | (v & 0x4) >> 1 | ((v & 0x8) >> 3);
-}
-
-inline uint8_t lsb5(int v) {
-    return ((v & 0x1) << 4) | (v & 0x2) << 2 | (v & 0x4) | (v & 0x8) >> 2 | ((v & 0x10) >> 4);
-}
-
 void setup() {
     cu.start();
 }
 
 void loop() {
+    uint8_t prog[3];
     int data = cu.read();
-    if (data & 0x1000) {
-        uint8_t w = lsb4(data >> 8);
-        uint8_t b = lsb5(data >> 3);
-        uint8_t r = lsb3(data);
-
-        if (b == 16 && r == 7) {
-            led1 = w >= 1;
-            led2 = w >= 2;
-            led3 = w >= 3;
-            led4 = w >= 4;
-            led5 = w >= 5;
+    if (cu.split_programming_word(data, prog)) {
+        // prog = { value, command, address }
+        if (prog[1] == 16 && prog[2] == 7) {
+            led1 = prog[0] >= 1;
+            led2 = prog[0] >= 2;
+            led3 = prog[0] >= 3;
+            led4 = prog[0] >= 4;
+            led5 = prog[0] >= 5;
         }
     }
 }
