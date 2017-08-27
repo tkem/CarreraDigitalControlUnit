@@ -38,7 +38,7 @@ class CarreraDigitalControlUnit {
 public:
     /** Create a connection to a ControlUnit using the specified pin
      *
-     *  @param pin digital input connected to the Control Unit
+     * @param pin digital input connected to the Control Unit
      */
     CarreraDigitalControlUnit(PinName pin) : _irq(pin), _running(false), _avail(false) {}
 
@@ -54,11 +54,17 @@ public:
      */
     void reset();
 
-    /** Read a data word from a Control Unit
+    /** Read a data word from the Control Unit
      */
     int read();
 
     /** Split a programming data word into its components
+     *
+     * If successfull, res will contain the following
+     *
+     * - res[0]  The programming command (0..31)
+     * - res[1]  The programming value (0..15)
+     * - res[2]  The programming address/controller (0..7)
      *
      * @param data The data word to split
      *
@@ -70,6 +76,13 @@ public:
 
     /** Split a controller data word into its components
      *
+     * If successfull, res will contain the following
+     *
+     * - res[0]  The controller's address (0..5)
+     * - res[1]  The controller's speed (0..15)
+     * - res[2]  Whether the lange change button is pressed (0..1)
+     * - res[3]  Whether fuel mode is enabled (0..1)
+     *
      * @param data The data word to split
      *
      * @param res The controller data word's components
@@ -79,6 +92,13 @@ public:
     static bool split_controller_word(int data, uint8_t res[4]);
 
     /** Split a pace car data word into its components
+     *
+     * If successfull, res will contain the following
+     *
+     * - res[0]  Whether pace and autonomous cars are free to move (0..1)
+     * - res[1]  Whether the pace car should return to the box (0..1)
+     * - res[2]  Whether the pace car is active (0..1)
+     * - res[3]  Whether fuel mode is enabled (0..1)
      *
      * @param data The data word to split
      *
@@ -90,6 +110,10 @@ public:
 
     /** Split an acknowledge data word into its components
      *
+     * If successfull, res will contain the following
+     *
+     * - res[0]  A bit mask of time slots in which a message was received
+     *
      * @param data The data word to split
      *
      * @param res The acknowledge data word's components
@@ -99,6 +123,11 @@ public:
     static bool split_acknowledge_word(int data, uint8_t res[1]);
 
     /** Split an active controller data word into its components
+     *
+     * If successfull, res will contain the following
+     *
+     * - res[0]  A bit mask representing active controllers (0..63)
+     * - res[1]  Whether any controller was active (0..1)
      *
      * @param data The data word to split
      *

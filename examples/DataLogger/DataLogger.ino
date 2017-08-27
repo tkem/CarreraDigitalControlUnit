@@ -81,7 +81,7 @@ void loop() {
             << " ADDRESS=" << values[2]
             << "]\r\n";
     } else if (cu.split_controller_word(data, values)) {
-        // values = { address, speed, status }
+        // values = { address, speed, button, fuel }
         out << uint16_t(data) << " [CTRL:"
             << " ADDRESS=" << values[0]
             << " SPEED=" << values[1]
