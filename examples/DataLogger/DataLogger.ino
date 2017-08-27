@@ -74,10 +74,10 @@ void loop() {
     uint8_t values[4];  // maximum number of components
     int data = cu.read();
     if (cu.split_programming_word(data, values)) {
-        // values = { value, command, address }
+        // values = { command, value, address }
         out << uint16_t(data) << " [PROG:"
-            << " VALUE=" << values[0]
-            << " COMMAND=" << values[1]
+            << " COMMAND=" << values[0]
+            << " VALUE=" << values[1]
             << " ADDRESS=" << values[2]
             << "]\r\n";
     } else if (cu.split_controller_word(data, values)) {

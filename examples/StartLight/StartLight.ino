@@ -36,13 +36,13 @@ void loop() {
     uint8_t prog[3];
     int data = cu.read();
     if (cu.split_programming_word(data, prog)) {
-        // prog = { value, command, address }
-        if (prog[1] == 16 && prog[2] == 7) {
-            led1 = prog[0] >= 1;
-            led2 = prog[0] >= 2;
-            led3 = prog[0] >= 3;
-            led4 = prog[0] >= 4;
-            led5 = prog[0] >= 5;
+        // prog = { command, value, address }
+        if (prog[0] == 16 && prog[2] == 7) {
+            led1 = prog[1] >= 1;
+            led2 = prog[1] >= 2;
+            led3 = prog[1] >= 3;
+            led4 = prog[1] >= 4;
+            led5 = prog[1] >= 5;
         }
     }
 }

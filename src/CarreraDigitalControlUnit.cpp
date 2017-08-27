@@ -153,8 +153,8 @@ bool CarreraDigitalControlUnit::split_programming_word(int data, uint8_t res[3])
     if ((data & ~0xfff) == 0x1000) {
         // programming word is LSB
         data = rev12(data);
-        res[0] = data & 0x0f;
-        res[1] = (data >> 4) & 0x1f;
+        res[0] = (data >> 4) & 0x1f;
+        res[1] = data & 0x0f;
         res[2] = (data >> 9) & 0x07;
         return true;
     } else {

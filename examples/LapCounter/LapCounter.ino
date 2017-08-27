@@ -23,7 +23,7 @@ CarreraDigitalControlUnit cu(D2);
 
 mbed::Serial pc(USBTX, USBRX);
 
-int lap = 0;
+uint8_t lap = 0;
 
 void setup() {
     cu.start();
@@ -33,15 +33,15 @@ void loop() {
     uint8_t prog[3];
     int data = cu.read();
     if (cu.split_programming_word(data, prog)) {
-        // prog = { value, command, address }
-        const uint8_t value = prog[0];
-        const uint8_t command = prog[1];
+        // prog = { command, value, address }
+        const uint8_t command = prog[0];
+        const uint8_t value = prog[1];
         const uint8_t address = prog[2];
 
         switch (command) {
         case 6:
             if (value == 9 && address == 0) {
-                pc.puts("New race\r\n");
+                pc.puts("Start new race\r\n");
                 lap = 0;
             } else {
                 pc.printf("#%d: Position %d\r\n", address, value);
