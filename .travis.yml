@@ -11,6 +11,7 @@ install:
 env:
 - PLATFORMIO_CI_SRC=examples/DataLogger
 - PLATFORMIO_CI_SRC=examples/StartLight
+- PLATFORMIO_CI_SRC=examples/LapCounter
 
 script:
 - platformio ci --lib="." --board=uno --board=leonardo
