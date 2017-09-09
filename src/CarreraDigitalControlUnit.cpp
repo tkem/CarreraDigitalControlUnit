@@ -47,6 +47,20 @@ static uint8_t rev8(uint8_t data)
     return data;
 }
 
+static int atomic_read(volatile int* p)
+{
+    int v;
+#ifdef ARDUINO
+    // 16-bit reads are *not* atomic on 8-bit platforms
+    do {
+        v = *p;
+    } while (v != *p);
+#else
+    v = *p;;
+#endif
+    return v;
+}
+
 void CarreraDigitalControlUnit::start()
 {
     core_util_critical_section_enter();
@@ -81,17 +95,22 @@ void CarreraDigitalControlUnit::reset()
 
 int CarreraDigitalControlUnit::read()
 {
-    int data;
     while (!_avail)
         ;
-#ifdef ARDUINO
-    // 16-bit reads are *not* atomic on 8-bit platforms
-    do {
-        data = _data;
-    } while (data != _data);
-#else
-    data = _data;
-#endif
+    int data = atomic_read(&_data);
+    _avail = false;
+    return data;
+}
+
+int CarreraDigitalControlUnit::read(long timeout_us)
+{
+    uint32_t start = us_ticker_read();
+    while (!_avail) {
+        if ((us_ticker_read() - start) > (uint32_t)timeout_us) {
+            return -1;
+        }
+    }
+    int data = atomic_read(&_data);
     _avail = false;
     return data;
 }

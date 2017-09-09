@@ -58,6 +58,14 @@ public:
      */
     int read();
 
+    /** Read a data word from the Control Unit with timeout
+     *
+     * @param timeout_us The timeout in microseconds
+     *
+     * @returns the next data word, or -1 on timeout
+     */
+    int read(long timeout_us);
+
     /** Split a programming data word into its components
      *
      * If successfull, res will contain the following
