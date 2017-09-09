@@ -108,38 +108,36 @@ void CarreraDigitalControlUnit::emit()
 
 void CarreraDigitalControlUnit::fall()
 {
-    // TODO: handle data packets sent to CU at d =~ 2300?
-
-    // mbed::Timer is nice, but in an ISR we need something simple and
-    // efficient, even if it may overflow...
-    uint32_t t = us_ticker_read();
-    uint32_t d = t - _time;
-    if (_buffer && d > 75 && d < 125) {
+    // we expect 7.5ms between data packets, so unsigned should be
+    // enough on any platform...
+    unsigned t = us_ticker_read();
+    unsigned d = t - _time;
+    if (_buffer && d >= 80 && d < 128) {
         _buffer <<= 1;
         _buffer |= 1;
         if (_buffer & emit_mask[_index]) {
             emit();
         }
         _time = t;
-    } else if (d > 6000) {
-        if (_buffer) {
-            if (_index == 2) {
-                emit();  // no acknowledge, timeout
-            } else {
+    } else {
+        if (_index == 2 && _buffer && d >= 128) {
+            emit();  // probably ACT and not ACK
+        }
+        if (d > 6000) {
+            if (_buffer) {
                 _index = 0;  // lost sync
             }
+            _buffer = 1;
+            _time = t;
         }
-        _buffer = 1;
-        _time = t;
     }
 }
 
 void CarreraDigitalControlUnit::rise()
 {
-    // FIXME: skip if _buffer == 0?
-    uint32_t t = us_ticker_read();
-    uint32_t d = t - _time;
-    if (d > 75 && d < 125) {
+    unsigned t = us_ticker_read();
+    unsigned d = t - _time;
+    if (d >= 80 && d < 128) {
         _buffer <<= 1;
         if (_buffer & emit_mask[_index]) {
             emit();

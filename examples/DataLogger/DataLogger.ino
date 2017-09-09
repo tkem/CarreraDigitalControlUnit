@@ -99,7 +99,7 @@ void loop() {
     } else if (cu.split_acknowledge_word(data, values)) {
         // values = { slot }
         out << uint16_t(data) << " [ACK:"
-            << " SLOT=" << values[0]
+            << " SLOTS=" << values[0]
             << "]\r\n";
     } else if (cu.split_active_word(data, values)) {
         // values = { mask, any }
@@ -109,6 +109,7 @@ void loop() {
             << "]\r\n";
     } else {
         out << uint16_t(data) << " [???]\r\n";
+        wait(1);
         cu.reset();  // probably lost sync
     }
 }
