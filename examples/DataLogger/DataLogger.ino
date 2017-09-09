@@ -72,8 +72,12 @@ void setup() {
 
 void loop() {
     uint8_t values[4];  // maximum number of components
-    int data = cu.read();
-    if (cu.split_programming_word(data, values)) {
+    int data = cu.read(100000);  // 100ms timeout
+    if (data < 0) {
+        out << "Timeout\r\n";
+        wait(1);
+        cu.reset();
+    } else if (cu.split_programming_word(data, values)) {
         // values = { command, value, address }
         out << uint16_t(data) << " [PROG:"
             << " COMMAND=" << values[0]
