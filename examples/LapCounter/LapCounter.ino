@@ -13,9 +13,9 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
-#include <mbed.h>
-
 #include "CarreraDigitalControlUnit.h"
+
+#include <mbed.h>
 
 // set digital pin 2 as input - make sure it does not deliver more
 // than 5V or 3.3V, depending on platform!
@@ -33,7 +33,7 @@ void loop() {
     uint8_t prog[3];
     int data = cu.read();
     if (cu.split_programming_word(data, prog)) {
-        // prog = { command, value, address }
+        // prog := { command, value, address }
         const uint8_t command = prog[0];
         const uint8_t value = prog[1];
         const uint8_t address = prog[2];

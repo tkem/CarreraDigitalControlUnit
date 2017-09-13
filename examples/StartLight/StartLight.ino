@@ -13,9 +13,9 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 */
-#include <mbed.h>
-
 #include "CarreraDigitalControlUnit.h"
+
+#include <mbed.h>
 
 // set digital pin 2 as input - make sure it does not deliver more
 // than 5V or 3.3V, depending on platform!
@@ -28,15 +28,11 @@ DigitalOut led3(D5);
 DigitalOut led4(D6);
 DigitalOut led5(D7);
 
-void setup() {
-    cu.start();
-}
-
-void loop() {
+// this should be short and fast enough to call from ISR
+void receive(int data) {
     uint8_t prog[3];
-    int data = cu.read();
     if (cu.split_programming_word(data, prog)) {
-        // prog = { command, value, address }
+        // prog := { command, value, address }
         if (prog[0] == 16 && prog[2] == 7) {
             led1 = prog[1] >= 1;
             led2 = prog[1] >= 2;
@@ -45,4 +41,13 @@ void loop() {
             led5 = prog[1] >= 5;
         }
     }
+}
+
+void setup() {
+    cu.attach(receive);
+    cu.start();
+}
+
+void loop() {
+    // nothing to do...
 }

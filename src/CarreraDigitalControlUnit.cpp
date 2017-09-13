@@ -61,6 +61,16 @@ static int atomic_read(volatile int* p)
     return v;
 }
 
+CarreraDigitalControlUnit::CarreraDigitalControlUnit(PinName pin)
+    : _irq(pin), _running(false), _avail(false)
+{
+}
+
+void CarreraDigitalControlUnit::attach(const Callback<void(int)>& func)
+{
+    _recv = func;
+}
+
 void CarreraDigitalControlUnit::start()
 {
     core_util_critical_section_enter();
@@ -117,6 +127,9 @@ int CarreraDigitalControlUnit::read(long timeout_us)
 
 void CarreraDigitalControlUnit::emit()
 {
+    if (_recv) {
+        _recv.call(_buffer);
+    }
     _data = _buffer;
     _buffer = 0;
     _avail = true;

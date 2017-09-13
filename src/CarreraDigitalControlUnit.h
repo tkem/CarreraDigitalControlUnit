@@ -32,6 +32,8 @@ class CarreraDigitalControlUnit {
     uint16_t _buffer;
     uint8_t _index;
 
+    Callback<void(int)> _recv;
+
     volatile bool _avail;
     volatile int _data;
 
@@ -40,7 +42,11 @@ public:
      *
      * @param pin digital input connected to the Control Unit
      */
-    CarreraDigitalControlUnit(PinName pin) : _irq(pin), _running(false), _avail(false) {}
+    CarreraDigitalControlUnit(PinName pin);
+
+    /** Attach a function to call whenever a data word is received.
+     */
+    void attach(const Callback<void(int)>& func);
 
     /** Start receiving data from the Control Unit
      */
