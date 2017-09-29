@@ -28,10 +28,14 @@ DigitalOut led3(D5);
 DigitalOut led4(D6);
 DigitalOut led5(D7);
 
-// this should be short and fast enough to call from ISR
-void receive(int data) {
+void setup() {
+    cu.start();
+}
+
+void loop() {
     uint8_t prog[3];
-    if (cu.split_programming_word(data, prog)) {
+    int data = cu.read();
+    if (cu.parse_prog(data, prog)) {
         // prog := { command, value, address }
         if (prog[0] == 16 && prog[2] == 7) {
             led1 = prog[1] >= 1;
@@ -41,13 +45,4 @@ void receive(int data) {
             led5 = prog[1] >= 5;
         }
     }
-}
-
-void setup() {
-    cu.attach(receive);
-    cu.start();
-}
-
-void loop() {
-    // nothing to do...
 }

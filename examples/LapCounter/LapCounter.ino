@@ -23,46 +23,47 @@ CarreraDigitalControlUnit cu(D2);
 
 mbed::Serial pc(USBTX, USBRX);
 
-uint8_t lap = 0;
+volatile uint8_t lap = 0;
+volatile bool valid = false;
+
+// this should be short and fast enough to be called from an ISR
+void update(int data) {
+    static uint8_t tmp = 0;
+    uint8_t prog[3];
+    if (cu.parse_prog(data, prog)) {
+        // prog := { command, value, address }
+        switch (prog[0]) {
+        case 6:
+            if (prog[1] == 9 && prog[2] == 0) {
+                valid = false;
+            }
+            break;
+        case 17:
+            tmp = prog[1] << 4;
+            break;
+        case 18:
+            lap = prog[1] | tmp;
+            valid = true;
+            break;
+        }
+    }
+}
 
 void setup() {
+    cu.attach(update);
     cu.start();
 }
 
 void loop() {
-    uint8_t prog[3];
-    int data = cu.read();
-    if (cu.split_programming_word(data, prog)) {
-        // prog := { command, value, address }
-        const uint8_t command = prog[0];
-        const uint8_t value = prog[1];
-        const uint8_t address = prog[2];
-
-        switch (command) {
-        case 6:
-            if (value == 9 && address == 0) {
-                pc.puts("Start new race\r\n");
-                lap = 0;
-            } else {
-                pc.printf("#%d: Position %d\r\n", address, value);
-            }
-            break;
-        case 8:
-            pc.printf("#%d: New fastest lap\r\n", address);
-            break;
-        case 9:
-            pc.printf("#%d: Lap finished\r\n", address);
-            break;
-        case 11:
-            pc.printf("#%d: False start\r\n", address);
-            break;
-        case 17:
-            lap = (lap & 0x0f) | (value << 4);
-            break;
-        case 18:
-            lap = (lap & 0xf0) | value;
-            pc.printf("Lap %d\r\n", lap);
-            break;
+    static int previous = -2;
+    int current = valid ? lap : -1;
+    if (current != previous) {
+        // update your display here (which may take more than 7.5ms)
+        if (current >= 0) {
+            pc.printf("Lap %d\r\n", current);
+        } else {
+            pc.printf("Lap n/a\r\n");
         }
+        previous = current;
     }
 }

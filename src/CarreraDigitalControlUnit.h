@@ -20,22 +20,21 @@
 
 /** A Carrera(R) Digital 124/132 Control Unit connection
  *
- * @note Synchronization level: Not protected
+ * @note Synchronization level: Interrupt safe
  *
  * @ingroup drivers
  */
 class CarreraDigitalControlUnit {
     InterruptIn _irq;
-    bool _running;
-
-    uint32_t _time;
-    uint16_t _buffer;
-    uint8_t _index;
-
     Callback<void(int)> _recv;
 
-    volatile bool _avail;
+    unsigned _time;
+    unsigned _buffer;
+    unsigned _index;
+
     volatile int _data;
+    volatile bool _avail;
+    bool _running;
 
 public:
     /** Create a connection to a ControlUnit using the specified pin
@@ -86,7 +85,7 @@ public:
      *
      * @returns true on success, false on error
      */
-    static bool split_programming_word(int data, uint8_t res[3]);
+    static bool parse_prog(int data, uint8_t res[3]);
 
     /** Split a controller data word into its components
      *
@@ -103,38 +102,24 @@ public:
      *
      * @returns true on success, false on error
      */
-    static bool split_controller_word(int data, uint8_t res[4]);
+    static bool parse_ctrl(int data, uint8_t res[4]);
 
-    /** Split a pace car data word into its components
+    /** Split a pace/autonomous car data word into its components
      *
      * If successfull, res will contain the following
      *
-     * - res[0]  Whether pace and autonomous cars are free to move (0..1)
+     * - res[0]  Whether pace car and autonomous car are stopped (0..1)
      * - res[1]  Whether the pace car should return to the box (0..1)
      * - res[2]  Whether the pace car is active (0..1)
      * - res[3]  Whether fuel mode is enabled (0..1)
      *
      * @param data The data word to split
      *
-     * @param res The pace car data word's components
+     * @param res The pace/autonomous car data word's components
      *
      * @returns true on success, false on error
      */
-    static bool split_pacecar_word(int data, uint8_t res[4]);
-
-    /** Split an acknowledge data word into its components
-     *
-     * If successfull, res will contain the following
-     *
-     * - res[0]  A bit mask of time slots in which a message was received
-     *
-     * @param data The data word to split
-     *
-     * @param res The acknowledge data word's components
-     *
-     * @returns true on success, false on error
-     */
-    static bool split_acknowledge_word(int data, uint8_t res[1]);
+    static bool parse_pace(int data, uint8_t res[4]);
 
     /** Split an active controller data word into its components
      *
@@ -149,7 +134,21 @@ public:
      *
      * @returns true on success, false on error
      */
-    static bool split_active_word(int data, uint8_t res[2]);
+    static bool parse_act(int data, uint8_t res[2]);
+
+    /** Split an acknowledge data word into its components
+     *
+     * If successfull, res will contain the following
+     *
+     * - res[0]  A bit mask of time slots in which a message was received
+     *
+     * @param data The data word to split
+     *
+     * @param res The acknowledge data word's components
+     *
+     * @returns true on success, false on error
+     */
+    static bool parse_ack(int data, uint8_t res[1]);
 
 private:
     void emit();

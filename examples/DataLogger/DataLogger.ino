@@ -77,40 +77,40 @@ void loop() {
         out << "Timeout\r\n";
         wait(1);
         cu.reset();
-    } else if (cu.split_programming_word(data, values)) {
-        // values := { command, value, address }
-        out << uint16_t(data) << " [PROG:"
+    } else if (cu.parse_prog(data, values)) {
+        // prog := { command, value, address }
+        out << uint16_t(data) << " PROG:"
             << " COMMAND=" << values[0]
             << " VALUE=" << values[1]
             << " ADDRESS=" << values[2]
-            << "]\r\n";
-    } else if (cu.split_controller_word(data, values)) {
-        // values := { address, speed, button, fuel }
-        out << uint16_t(data) << " [CTRL:"
+            << "\r\n";
+    } else if (cu.parse_ctrl(data, values)) {
+        // ctrl := { address, speed, button, fuel }
+        out << uint16_t(data) << " CTRL:"
             << " ADDRESS=" << values[0]
             << " SPEED=" << values[1]
             << " BUTTON=" << values[2]
             << " FUEL=" << values[3]
-            << "]\r\n";
-    } else if (cu.split_pacecar_word(data, values)) {
-        // values := { mode, box, active, fuel }
-        out << uint16_t(data) << " [PACE:"
-            << " MODE=" << values[0]
-            << " BOX=" << values[1]
+            << "\r\n";
+    } else if (cu.parse_pace(data, values)) {
+        // pace := { stop, return, active, fuel }
+        out << uint16_t(data) << " PACE:"
+            << " STOP=" << values[0]
+            << " RETURN=" << values[1]
             << " ACTIVE=" << values[2]
             << " FUEL=" << values[3]
-            << "]\r\n";
-    } else if (cu.split_acknowledge_word(data, values)) {
-        // values := { slot }
-        out << uint16_t(data) << " [ACK:"
-            << " SLOTS=" << values[0]
-            << "]\r\n";
-    } else if (cu.split_active_word(data, values)) {
-        // values := { mask, any }
-        out << uint16_t(data) << " [ACT:"
+            << "\r\n";
+    } else if (cu.parse_act(data, values)) {
+        // act := { mask, any }
+        out << uint16_t(data) << " ACT:"
             << " MASK=" << values[0]
             << " ANY=" << values[1]
-            << "]\r\n";
+            << "\r\n";
+    } else if (cu.parse_ack(data, values)) {
+        // ack := { mask }
+        out << uint16_t(data) << " ACK:"
+            << " MASK=" << values[0]
+            << "\r\n";
     } else {
         out << uint16_t(data) << " [???]\r\n";
         wait(1);

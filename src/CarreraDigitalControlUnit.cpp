@@ -31,7 +31,7 @@ static const uint16_t emit_mask[10] = {
     1 << 9
 };
 
-static int rev12(int data)
+static unsigned rev12(unsigned data)
 {
     data = ((data & 0x555) << 1) | ((data >> 1) & 0x555);
     data = ((data & 0x333) << 2) | ((data >> 2) & 0x333);
@@ -62,7 +62,7 @@ static int atomic_read(volatile int* p)
 }
 
 CarreraDigitalControlUnit::CarreraDigitalControlUnit(PinName pin)
-    : _irq(pin), _running(false), _avail(false)
+    : _irq(pin), _avail(false), _running(false)
 {
 }
 
@@ -178,7 +178,7 @@ void CarreraDigitalControlUnit::rise()
     }
 }
 
-bool CarreraDigitalControlUnit::split_programming_word(int data, uint8_t res[3])
+bool CarreraDigitalControlUnit::parse_prog(int data, uint8_t res[3])
 {
     if ((data & ~0xfff) == 0x1000) {
         // programming word is LSB
@@ -192,20 +192,7 @@ bool CarreraDigitalControlUnit::split_programming_word(int data, uint8_t res[3])
     }
 }
 
-bool CarreraDigitalControlUnit::split_pacecar_word(int data, uint8_t res[4])
-{
-    if ((data & ~0x3f) == 0x3c0) {
-        res[0] = (data >> 3) & 0x1;
-        res[1] = (data >> 2) & 0x1;
-        res[2] = (data >> 1) & 0x1;
-        res[3] = data & 0x1;
-        return true;
-    } else {
-        return false;
-    }
-}
-
-bool CarreraDigitalControlUnit::split_controller_word(int data, uint8_t res[4])
+bool CarreraDigitalControlUnit::parse_ctrl(int data, uint8_t res[4])
 {
     if ((data & ~0x1ff) == 0x200 && (data >> 6) != 0xf) {
         // controller word is MSB
@@ -219,21 +206,36 @@ bool CarreraDigitalControlUnit::split_controller_word(int data, uint8_t res[4])
     }
 }
 
-bool CarreraDigitalControlUnit::split_acknowledge_word(int data, uint8_t res[1])
+bool CarreraDigitalControlUnit::parse_pace(int data, uint8_t res[4])
 {
-    if ((data & ~0xff) == 0x100) {
-        res[0] = rev8(data);
+    if ((data & ~0x3f) == 0x3c0) {
+        res[0] = (data >> 5) & 0x1;
+        res[1] = (data >> 2) & 0x1;
+        res[2] = (data >> 1) & 0x1;
+        res[3] = data & 0x1;
         return true;
     } else {
         return false;
     }
 }
 
-bool CarreraDigitalControlUnit::split_active_word(int data, uint8_t res[2])
+bool CarreraDigitalControlUnit::parse_act(int data, uint8_t res[2])
 {
     if ((data & ~0x7f) == 0x80) {
+        // active controller mask is LSB
         res[0] = rev8(data >> 1) >> 2;
         res[1] = data & 0x1;
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool CarreraDigitalControlUnit::parse_ack(int data, uint8_t res[1])
+{
+    if ((data & ~0xff) == 0x100) {
+        // acknowledge mask is LSB
+        res[0] = rev8(data);
         return true;
     } else {
         return false;
