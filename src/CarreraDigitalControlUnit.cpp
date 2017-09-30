@@ -61,8 +61,8 @@ static int atomic_read(volatile int* p)
     return v;
 }
 
-CarreraDigitalControlUnit::CarreraDigitalControlUnit(PinName pin)
-    : _irq(pin), _avail(false), _running(false)
+CarreraDigitalControlUnit::CarreraDigitalControlUnit(PinName pin, bool inverted)
+    : _irq(pin), _avail(false), _inverted(inverted), _running(false)
 {
 }
 
@@ -76,8 +76,13 @@ void CarreraDigitalControlUnit::start()
     core_util_critical_section_enter();
     if (!_running) {
         reset();
-        _irq.rise(callback(this, &CarreraDigitalControlUnit::rise));
-        _irq.fall(callback(this, &CarreraDigitalControlUnit::fall));
+        if (_inverted) {
+            _irq.rise(callback(this, &CarreraDigitalControlUnit::fall));
+            _irq.fall(callback(this, &CarreraDigitalControlUnit::rise));
+        } else {
+            _irq.rise(callback(this, &CarreraDigitalControlUnit::rise));
+            _irq.fall(callback(this, &CarreraDigitalControlUnit::fall));
+        }
         _running = true;
     }
     core_util_critical_section_exit();

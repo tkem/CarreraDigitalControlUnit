@@ -34,14 +34,17 @@ class CarreraDigitalControlUnit {
 
     volatile int _data;
     volatile bool _avail;
+
+    bool _inverted;
     bool _running;
 
 public:
     /** Create a connection to a ControlUnit using the specified pin
      *
-     * @param pin digital input connected to the Control Unit
+     * @param pin A digital input connected to the Control Unit
+     * @param inverted Whether the input is logically inverted
      */
-    CarreraDigitalControlUnit(PinName pin);
+    CarreraDigitalControlUnit(PinName pin, bool inverted = false);
 
     /** Attach a function to call whenever a data word is received.
      */
