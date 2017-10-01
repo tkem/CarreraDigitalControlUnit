@@ -58,7 +58,7 @@ void loop() {
     static int previous = -2;
     int current = valid ? lap : -1;
     if (current != previous) {
-        // update your display here (which may take more than 7.5ms)
+        // update your display etc. here, which might take more than 75ms
         if (current >= 0) {
             pc.printf("Lap %d\r\n", current);
         } else {
