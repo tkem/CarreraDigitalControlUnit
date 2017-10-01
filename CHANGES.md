@@ -1,4 +1,10 @@
-0.4.0 (2017-09-09)
+0.5.0 (2017-10-01)
+------------------
+
+Add `inverted` constructor argument.
+
+
+0.4.0 (2017-09-29)
 ------------------
 
 - Improve data member types and member function names.
