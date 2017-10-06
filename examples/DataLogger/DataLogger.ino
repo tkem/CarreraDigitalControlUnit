@@ -23,8 +23,7 @@ class DataLogger {
     RawSerial _serial;
 
 public:
-    template<class TX, class RX>
-    DataLogger(TX tx, RX rx, long baud) : _serial(tx, rx, baud) {}
+    DataLogger(PinName tx, PinName rx, long baud) : _serial(tx, rx, baud) {}
 
     DataLogger& operator<<(const char* s) {
         _serial.puts(s);
