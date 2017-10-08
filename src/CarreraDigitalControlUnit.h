@@ -43,8 +43,20 @@ public:
      *
      * @param pin A digital input connected to the Control Unit
      * @param inverted Whether the input is logically inverted
+     *
+     * @note pin must support interrupts
      */
     CarreraDigitalControlUnit(PinName pin, bool inverted = false);
+
+    /** Create a connection to a ControlUnit using the specified pin
+     *
+     * @param pin A digital input connected to the Control Unit
+     * @param mode The pin mode to set for the input
+     * @param inverted Whether the input is logically inverted
+     *
+     * @note pin must support interrupts
+     */
+    CarreraDigitalControlUnit(PinName pin, PinMode mode, bool inverted);
 
     /** Attach a function to call whenever a data word is received.
      */

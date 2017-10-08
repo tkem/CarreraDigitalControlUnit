@@ -66,6 +66,12 @@ CarreraDigitalControlUnit::CarreraDigitalControlUnit(PinName pin, bool inverted)
 {
 }
 
+CarreraDigitalControlUnit::CarreraDigitalControlUnit(PinName pin, PinMode mode, bool inverted)
+    : _irq(pin), _avail(false), _inverted(inverted), _running(false)
+{
+    _irq.mode(mode);
+}
+
 void CarreraDigitalControlUnit::attach(const Callback<void(int)>& func)
 {
     _recv = func;
