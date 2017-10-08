@@ -1,3 +1,11 @@
+0.6.0 (2017-10-08)
+------------------
+
+- Add constructor with pin mode parameter.
+
+- Update examples for mbino v1.0.
+
+
 0.5.0 (2017-10-01)
 ------------------
 
