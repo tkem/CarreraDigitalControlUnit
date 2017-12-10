@@ -14,56 +14,105 @@
    limitations under the License.
 */
 #include "CarreraDigitalControlUnit.h"
+#include "SerialDisplay.h"
+#include "TM1637Display.h"
 
 #include <mbed.h>
 
+// uncomment to use TM1637 4-digit LED display
+//#define USE_TM1637_DISPLAY 1
+
+#ifdef USE_TM1637_DISPLAY
+TM1637Display display(D4, D5);
+#else
+SerialDisplay display(USBTX, USBRX);
+#endif
+
 // set digital pin 2 as input - make sure it does not deliver more
 // than 5V or 3.3V, depending on platform!
-CarreraDigitalControlUnit cu(D2);
+CarreraDigitalControlUnit cu(D2, false /* set true for logically inverted input */);
 
-mbed::Serial pc(USBTX, USBRX);
+// pwm output for showing safety car phase, etc.
+PwmOut led(D10);
 
-volatile uint8_t lap = 0;
-volatile bool valid = false;
+// set by interrupt handler
+volatile struct {
+    uint8_t lap;
+    bool set;
+    bool stopped;
+    bool pacecar;
+} device;
 
 // this should be short and fast enough to be called from an ISR
 void update(int data) {
     static uint8_t tmp = 0;
-    uint8_t prog[3];
-    if (cu.parse_prog(data, prog)) {
-        // prog := { command, value, address }
-        switch (prog[0]) {
-        case 6:
-            if (prog[1] == 9 && prog[2] == 0) {
-                valid = false;
-            }
+    uint8_t values[4];
+    if (cu.parse_prog(data, values)) {
+        // values := { command, value, address }
+        switch (values[0]) {
+        case 6:  // (re)set lap counter/position tower
+            device.set = (values[1] == 9 && values[2] == 0) ? false : device.set;
             break;
-        case 17:
-            tmp = prog[1] << 4;
+        case 17:  // current lap high nibble
+            tmp = values[1] << 4;
             break;
-        case 18:
-            lap = prog[1] | tmp;
-            valid = true;
+        case 18:  // current lap low nibble
+            device.lap = values[1] | tmp;
+            device.set = true;
+            break;
+        case 19:  // reset
+            device.set = false;
             break;
         }
+    } else if (cu.parse_pace(data, values)) {
+        // values := { stop, return, active, fuel }
+        device.stopped = values[0];
+        device.pacecar = values[2];
     }
 }
 
 void setup() {
+    display.clear();
+    led.period(1.0);
+    led.write(0);
     cu.attach(update);
     cu.start();
 }
 
 void loop() {
-    static int previous = -2;
-    int current = valid ? lap : -1;
-    if (current != previous) {
-        // update your display etc. here, which might take more than 75ms
-        if (current >= 0) {
-            pc.printf("Lap %d\r\n", current);
-        } else {
-            pc.printf("Lap n/a\r\n");
+    static uint8_t lap = 0;
+    static unsigned overflow = 0;
+    static bool clear = true;
+    static bool stopped = false;
+    static bool pacecar = false;
+
+    if (device.set) {
+        uint8_t culap = device.lap;
+        if (culap < lap) {
+            ++overflow;
         }
-        previous = current;
+        if (lap != culap || clear) {
+            lap = culap;
+            display.show((overflow << 8) | lap);
+            clear = false;
+        }
+    } else if (!clear) {
+        display.clear();
+        lap = 0;
+        overflow = 0;
+        clear = true;
+    }
+
+    if (device.stopped != stopped || device.pacecar != pacecar) {
+        stopped = device.stopped;
+        pacecar = device.pacecar;
+
+        if (stopped) {
+            led.write(1.0f);
+        } else if (pacecar) {
+            led.write(0.5f);
+        } else {
+            led.write(0.0f);
+        }
     }
 }
