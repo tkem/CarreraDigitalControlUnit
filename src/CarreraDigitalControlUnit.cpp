@@ -47,27 +47,13 @@ static uint8_t rev8(uint8_t data)
     return data;
 }
 
-static int atomic_read(volatile int* p)
-{
-    int v;
-#ifdef ARDUINO
-    // 16-bit reads are *not* atomic on 8-bit platforms
-    do {
-        v = *p;
-    } while (v != *p);
-#else
-    v = *p;;
-#endif
-    return v;
-}
-
 CarreraDigitalControlUnit::CarreraDigitalControlUnit(PinName pin, bool inverted)
-    : _irq(pin), _avail(false), _inverted(inverted), _running(false)
+    : _irq(pin), _data(0), _inverted(inverted), _running(false)
 {
 }
 
 CarreraDigitalControlUnit::CarreraDigitalControlUnit(PinName pin, PinMode mode, bool inverted)
-    : _irq(pin), _avail(false), _inverted(inverted), _running(false)
+    : _irq(pin), _data(0), _inverted(inverted), _running(false)
 {
     _irq.mode(mode);
 }
@@ -116,23 +102,24 @@ void CarreraDigitalControlUnit::reset()
 
 int CarreraDigitalControlUnit::read()
 {
-    while (!_avail)
-        ;
-    int data = atomic_read(&_data);
-    _avail = false;
+    uint16_t data;
+    do {
+        data = _data;
+    } while (!data || !core_util_atomic_cas_u16(&_data, &data, 0));
     return data;
 }
 
 int CarreraDigitalControlUnit::read(long timeout_us)
 {
+    // read(0) should return data if available
     uint32_t start = us_ticker_read();
-    while (!_avail) {
+    uint16_t data = _data;
+    while (!data || !core_util_atomic_cas_u16(&_data, &data, 0)) {
         if ((us_ticker_read() - start) > (uint32_t)timeout_us) {
             return -1;
         }
+        data = _data;
     }
-    int data = atomic_read(&_data);
-    _avail = false;
     return data;
 }
 
@@ -143,7 +130,6 @@ void CarreraDigitalControlUnit::emit()
     }
     _data = _buffer;
     _buffer = 0;
-    _avail = true;
     if (++_index == 10) {
         _index = 0;
     }
@@ -151,8 +137,8 @@ void CarreraDigitalControlUnit::emit()
 
 void CarreraDigitalControlUnit::fall()
 {
-    // we expect 7.5ms between data packets, so unsigned should be
-    // enough on any platform...
+    // we expect 7.5ms between data packets, so unsigned int should be
+    // wide enough on any platform...
     unsigned t = us_ticker_read();
     unsigned d = t - _time;
     if (_buffer && d >= 80 && d < 128) {

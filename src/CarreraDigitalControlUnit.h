@@ -32,9 +32,7 @@ class CarreraDigitalControlUnit {
     unsigned _buffer;
     unsigned _index;
 
-    volatile int _data;
-    volatile bool _avail;
-
+    uint16_t _data;
     bool _inverted;
     bool _running;
 
