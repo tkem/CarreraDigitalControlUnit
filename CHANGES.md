@@ -1,3 +1,11 @@
+0.6.1 (2017-12-16)
+------------------
+
+- Use compare-and-swap for marking data as read.
+
+- Enhance `LapCounter` example.
+
+
 0.6.0 (2017-10-08)
 ------------------
 
