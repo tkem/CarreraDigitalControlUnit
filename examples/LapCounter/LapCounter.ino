@@ -36,7 +36,7 @@ CarreraDigitalControlUnit cu(D2, false /* set true for logically inverted input 
 PwmOut led(D10);
 
 // set by interrupt handler
-volatile struct {
+static volatile struct {
     uint8_t lap;
     bool set;
     bool stopped;
