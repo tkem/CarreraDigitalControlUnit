@@ -1,6 +1,6 @@
 # CarreraDigitalControlUnit  [![Build Status](https://travis-ci.org/tkem/CarreraDigitalControlUnit.svg?branch=master)](https://travis-ci.org/tkem/CarreraDigitalControlUnit/)
 
-This is a cross-platform library for Arduino and mbed OS for
+This is a cross-platform library for Arduino and mbed OS 5 for
 interfacing a microcontroller board with the Carrera® DIGITAL 124/132
 slot car racing system.  Data transmission uses a single pair of wires
 connected directly to the slot car tracks.  Be aware, though, that the
