@@ -21,7 +21,7 @@ This project is still at an early stage and documentation leaves a lot
 to be desired, so you best have a look at the existing
 [examples](examples) for now.  To make the most out of this, you
 should also make yourself familiar with the [CU data
-protocol](http://slotbaer.de/index.php/carrera-digital-124-132/9-cu-daten-protokoll)
+protocol](http://slotbaer.de/carrera-digital-124-132/9-cu-daten-protokoll.html)
 (available in German only).
 
 
