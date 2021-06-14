@@ -2,7 +2,6 @@ language: python
 
 install:
 - pip install -U platformio
-- platformio lib --global install mbino
 
 env:
 - PLATFORMIO_CI_SRC=examples/CommandSniffer
@@ -11,5 +10,5 @@ env:
 - PLATFORMIO_CI_SRC=examples/StartLight
 
 script:
-- platformio ci --lib="." --board=uno
-- platformio ci --lib="src" --board=nucleo_f446re -O framework=mbed -O platform_packages=framework-mbed@~5
+- platformio ci --lib="src" --board=nucleo_f446re -O framework=mbed
+- platformio ci --lib="src" --board=pico -O framework=arduino

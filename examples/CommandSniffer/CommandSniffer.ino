@@ -1,5 +1,5 @@
 /*
-   Copyright 2017 Thomas Kemmer
+   Copyright 2017, 2021 Thomas Kemmer
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -17,11 +17,19 @@
 
 #include <mbed.h>
 
+#ifdef ARDUINO_ARCH_MBED
+REDIRECT_STDOUT_TO(Serial);
+#endif
+
 // set digital pin 2 as input - make sure it does not deliver more
 // than 5V or 3.3V, depending on platform!
-CarreraDigitalControlUnit cu(D2);
+#ifdef ARDUINO_ARCH_MBED
+PinName pin = p2;
+#else
+PinName pin = D2;
+#endif
 
-mbed::Serial pc(USBTX, USBRX);
+CarreraDigitalControlUnit cu(pin);
 
 bool show_normal_operation = true;
 
@@ -40,71 +48,71 @@ void loop() {
 
         switch (command) {
         case 0:
-            pc.printf("#%d: Set speed: %d\r\n", address, value);
+            printf("#%d: Set speed: %d\r\n", address, value);
             break;
         case 1:
-            pc.printf("#%d: Set brake: %d\r\n", address, value);
+            printf("#%d: Set brake: %d\r\n", address, value);
             break;
         case 2:
-            pc.printf("#%d: Set fuel: %d\r\n", address, value);
+            printf("#%d: Set fuel: %d\r\n", address, value);
             break;
         case 4:
             if (value >= 8) {
-                pc.printf("#%d: Blinking (value=%d)\r\n", address, value);
+                printf("#%d: Blinking (value=%d)\r\n", address, value);
             } else if (show_normal_operation) {
-                pc.printf("#%d: Operational (value=%d)\r\n", address, value);
+                printf("#%d: Operational (value=%d)\r\n", address, value);
             }
             break;
         case 5:
-            pc.printf("%d: %s pit (value=%d)\r\n", address, value ? "Enter" : "Exit", value);
+            printf("%d: %s pit (value=%d)\r\n", address, value ? "Enter" : "Exit", value);
             break;
         case 6:
             if (value == 9) {
-                pc.printf("#%d: Reset lap count and positions\r\n", address);
+                printf("#%d: Reset lap count and positions\r\n", address);
             } else {
-                pc.printf("#%d: Position %d\r\n", address, value);
+                printf("#%d: Position %d\r\n", address, value);
             }
             break;
         case 7:
-            pc.printf("#%d: Race finished (value=%d)\r\n", address, value);
+            printf("#%d: Race finished (value=%d)\r\n", address, value);
             break;
         case 8:
-            pc.printf("#%d: New fastest lap (value=%d)\r\n", address, value);
+            printf("#%d: New fastest lap (value=%d)\r\n", address, value);
             break;
         case 9:
-            pc.printf("#%d: Lap finished (value=%d)\r\n", address, value);
+            printf("#%d: Lap finished (value=%d)\r\n", address, value);
             break;
         case 10:
             if (value == 15) {
-                pc.printf("#%d: Turn off/reset fuel display\r\n", address);
+                printf("#%d: Turn off/reset fuel display\r\n", address);
             } else {
-                pc.printf("#%d: Fuel: %d\r\n", address, value);
+                printf("#%d: Fuel: %d\r\n", address, value);
             }
             break;
         case 11:
-            pc.printf("#%d: False start (value=%d)\r\n", address, value);
+            printf("#%d: False start (value=%d)\r\n", address, value);
             break;
         case 16:
-            pc.printf("#%d: Startlight: %d\r\n", address, value);
+            printf("#%d: Startlight: %d\r\n", address, value);
             break;
         case 17:
-            pc.printf("#%d: Lap high: %d\r\n", address, value);
+            printf("#%d: Lap high: %d\r\n", address, value);
             break;
         case 18:
-            pc.printf("#%d: Lap low: %d\r\n", address, value);
+            printf("#%d: Lap low: %d\r\n", address, value);
             break;
         case 19:
-            pc.printf("#%d: Reset (value=%d)\r\n", address, value);
+            printf("#%d: Reset (value=%d)\r\n", address, value);
             break;
         case 20:
             if (value == 15) {
-                pc.printf("#%d: Pit lane test\r\n", address);
+                printf("#%d: Pit lane test\r\n", address);
             } else {
-                pc.printf("#%d: Pit lane mode: %d\r\n", address, value);
+                printf("#%d: Pit lane mode: %d\r\n", address, value);
             }
             break;
         default:
-            pc.printf("#%d: ??? (command=%d, value=%d)\r\n", address, command, value);
+            printf("#%d: ??? (command=%d, value=%d)\r\n", address, command, value);
         }
     }
 }

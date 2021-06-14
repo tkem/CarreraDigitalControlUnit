@@ -1,5 +1,5 @@
 /*
-  Copyright 2017 Thomas Kemmer
+  Copyright 2017, 2021 Thomas Kemmer
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -15,8 +15,9 @@
 */
 #include "CarreraDigitalControlUnit.h"
 
-#include "hal/us_ticker_api.h"
+#ifdef MBED_VERSION
 #include "platform/mbed_critical.h"
+#endif
 
 static const uint16_t emit_mask[10] = {
     1 << 12,
@@ -47,21 +48,41 @@ static uint8_t rev8(uint8_t data)
     return data;
 }
 
+#ifdef ARDUINO
+CarreraDigitalControlUnit::CarreraDigitalControlUnit(int pin, bool inverted)
+    : _irq(digitalPinToPinName(pin)), _data(0), _inverted(inverted), _running(false)
+{
+
+}
+CarreraDigitalControlUnit::CarreraDigitalControlUnit(int pin, int mode, bool inverted)
+    : _irq(digitalPinToPinName(pin)), _data(0), _inverted(inverted), _running(false)
+{
+    switch (mode) {
+    case INPUT:
+        _irq.mode(PullNone);
+        break;
+    case INPUT_PULLUP:
+        _irq.mode(PullUp);
+        break;
+    case INPUT_PULLDOWN:
+    default:  // FIXME: really?
+        _irq.mode(PullDown);
+        break;
+    }
+}
+#endif
+
+#ifdef MBED_VERSION
 CarreraDigitalControlUnit::CarreraDigitalControlUnit(PinName pin, bool inverted)
     : _irq(pin), _data(0), _inverted(inverted), _running(false)
 {
 }
 
 CarreraDigitalControlUnit::CarreraDigitalControlUnit(PinName pin, PinMode mode, bool inverted)
-    : _irq(pin), _data(0), _inverted(inverted), _running(false)
+    : _irq(pin, mode), _data(0), _inverted(inverted), _running(false)
 {
-    _irq.mode(mode);
 }
-
-void CarreraDigitalControlUnit::attach(const Callback<void(int)>& func)
-{
-    _recv = func;
-}
+#endif
 
 void CarreraDigitalControlUnit::start()
 {
@@ -69,12 +90,13 @@ void CarreraDigitalControlUnit::start()
     if (!_running) {
         reset();
         if (_inverted) {
-            _irq.rise(callback(this, &CarreraDigitalControlUnit::fall));
-            _irq.fall(callback(this, &CarreraDigitalControlUnit::rise));
+            _irq.rise(mbed::callback(this, &CarreraDigitalControlUnit::fall));
+            _irq.fall(mbed::callback(this, &CarreraDigitalControlUnit::rise));
         } else {
-            _irq.rise(callback(this, &CarreraDigitalControlUnit::rise));
-            _irq.fall(callback(this, &CarreraDigitalControlUnit::fall));
+            _irq.rise(mbed::callback(this, &CarreraDigitalControlUnit::rise));
+            _irq.fall(mbed::callback(this, &CarreraDigitalControlUnit::fall));
         }
+        _timer.start();
         _running = true;
     }
     core_util_critical_section_exit();
@@ -84,6 +106,7 @@ void CarreraDigitalControlUnit::stop()
 {
     core_util_critical_section_enter();
     if (_running) {
+        _timer.stop();
         _irq.rise(0);
         _irq.fall(0);
         _running = false;
@@ -97,6 +120,7 @@ void CarreraDigitalControlUnit::reset()
     _time = 0;
     _buffer = 0;
     _index = 0;
+    _data = 0;
     core_util_critical_section_exit();
 }
 
@@ -109,13 +133,13 @@ int CarreraDigitalControlUnit::read()
     return data;
 }
 
-int CarreraDigitalControlUnit::read(long timeout_us)
+int CarreraDigitalControlUnit::read(uint32_t timeout_us)
 {
     // read(0) should return data if available
-    uint32_t start = us_ticker_read();
+    uint32_t start = time_us();
     uint16_t data = _data;
     while (!data || !core_util_atomic_cas_u16(&_data, &data, 0)) {
-        if ((us_ticker_read() - start) > (uint32_t)timeout_us) {
+        if ((time_us() - start) > timeout_us) {
             return -1;
         }
         data = _data;
@@ -125,9 +149,6 @@ int CarreraDigitalControlUnit::read(long timeout_us)
 
 void CarreraDigitalControlUnit::emit()
 {
-    if (_recv) {
-        _recv.call(_buffer);
-    }
     _data = _buffer;
     _buffer = 0;
     if (++_index == 10) {
@@ -138,8 +159,8 @@ void CarreraDigitalControlUnit::emit()
 void CarreraDigitalControlUnit::fall()
 {
     // we expect 7.5ms between data packets, so unsigned int should be
-    // wide enough on any platform...
-    unsigned t = us_ticker_read();
+    // wide enough on any platform and a little more efficient on AVR...
+    unsigned t = time_us();
     unsigned d = t - _time;
     if (_buffer && d >= 80 && d < 128) {
         _buffer <<= 1;
@@ -164,7 +185,7 @@ void CarreraDigitalControlUnit::fall()
 
 void CarreraDigitalControlUnit::rise()
 {
-    unsigned t = us_ticker_read();
+    unsigned t = time_us();
     unsigned d = t - _time;
     if (d >= 80 && d < 128) {
         _buffer <<= 1;
@@ -173,6 +194,11 @@ void CarreraDigitalControlUnit::rise()
         }
         _time = t;
     }
+}
+
+uint32_t CarreraDigitalControlUnit::time_us()
+{
+    return _timer.read_us();
 }
 
 bool CarreraDigitalControlUnit::parse_prog(int data, uint8_t res[3])

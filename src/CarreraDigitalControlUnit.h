@@ -1,5 +1,5 @@
 /*
-  Copyright 2017 Thomas Kemmer
+  Copyright 2017, 2021 Thomas Kemmer
 
   Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
@@ -16,7 +16,12 @@
 #ifndef CARRERA_DIGITAL_CONTROL_UNIT_H
 #define CARRERA_DIGITAL_CONTROL_UNIT_H
 
+#if defined(ARDUINO)
+#include <Arduino.h>
+#endif
+#if !defined(ARDUINO) || defined(ARDUINO_ARCH_MBED)
 #include <mbed.h>
+#endif
 
 /** A Carrera(R) Digital 124/132 Control Unit connection
  *
@@ -25,18 +30,32 @@
  * @ingroup drivers
  */
 class CarreraDigitalControlUnit {
-    InterruptIn _irq;
-    Callback<void(int)> _recv;
-
+#ifdef MBED_VERSION
+    mbed::InterruptIn _irq;
+    mbed::Timer _timer;
+#endif
     unsigned _time;
     unsigned _buffer;
     unsigned _index;
 
-    uint16_t _data;
+    volatile uint16_t _data;
     bool _inverted;
     bool _running;
 
 public:
+#if defined(ARDUINO)
+    /** Create a connection to a ControlUnit using the specified pin
+     *
+     * @param pin A digital input connected to the Control Unit
+     * @param inverted Whether the input is logically inverted
+     *
+     * @note pin must support interrupts
+     */
+    CarreraDigitalControlUnit(int pin, bool inverted = false);
+    CarreraDigitalControlUnit(int pin, int mode, bool inverted);
+#endif
+
+#ifdef MBED_VERSION
     /** Create a connection to a ControlUnit using the specified pin
      *
      * @param pin A digital input connected to the Control Unit
@@ -55,10 +74,7 @@ public:
      * @note pin must support interrupts
      */
     CarreraDigitalControlUnit(PinName pin, PinMode mode, bool inverted);
-
-    /** Attach a function to call whenever a data word is received.
-     */
-    void attach(const Callback<void(int)>& func);
+#endif
 
     /** Start receiving data from the Control Unit
      */
@@ -82,7 +98,7 @@ public:
      *
      * @returns the next data word, or -1 on timeout
      */
-    int read(long timeout_us);
+    int read(uint32_t timeout_us);
 
     /** Split a programming data word into its components
      *
@@ -165,8 +181,9 @@ public:
 
 private:
     void emit();
-    void rise();
     void fall();
+    void rise();
+    uint32_t time_us();
 };
 
 #endif
