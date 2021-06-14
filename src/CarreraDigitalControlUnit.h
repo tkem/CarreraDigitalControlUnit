@@ -30,20 +30,8 @@
  * @ingroup drivers
  */
 class CarreraDigitalControlUnit {
-#ifdef MBED_VERSION
-    mbed::InterruptIn _irq;
-    mbed::Timer _timer;
-#endif
-    unsigned _time;
-    unsigned _buffer;
-    unsigned _index;
-
-    volatile uint16_t _data;
-    bool _inverted;
-    bool _running;
-
 public:
-#if defined(ARDUINO)
+#ifdef ARDUINO
     /** Create a connection to a ControlUnit using the specified pin
      *
      * @param pin A digital input connected to the Control Unit
@@ -52,6 +40,15 @@ public:
      * @note pin must support interrupts
      */
     CarreraDigitalControlUnit(int pin, bool inverted = false);
+
+    /** Create a connection to a ControlUnit using the specified pin
+     *
+     * @param pin A digital input connected to the Control Unit
+     * @param mode The pin mode to set for the input
+     * @param inverted Whether the input is logically inverted
+     *
+     * @note pin must support interrupts
+     */
     CarreraDigitalControlUnit(int pin, int mode, bool inverted);
 #endif
 
@@ -184,6 +181,23 @@ private:
     void fall();
     void rise();
     uint32_t time_us();
+#ifdef MBED_VERSION
+    mbed::InterruptIn _irq;
+    mbed::Timer _timer;
+#else
+    static void irq();
+    int _pin;
+#ifdef __AVR
+    volatile uint8_t* _ireg;
+    uint8_t _mask;
+#endif
+#endif
+    volatile uint16_t _data;
+    bool _inverted;
+    bool _running;
+    unsigned _time;
+    unsigned _buffer;
+    unsigned _index;
 };
 
 #endif

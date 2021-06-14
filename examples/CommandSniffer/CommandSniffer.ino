@@ -15,25 +15,18 @@
 */
 #include "CarreraDigitalControlUnit.h"
 
-#include <mbed.h>
+#include "compat.h"
 
-#ifdef ARDUINO_ARCH_MBED
-REDIRECT_STDOUT_TO(Serial);
-#endif
-
-// set digital pin 2 as input - make sure it does not deliver more
+// use digital pin #2 as input - make sure it does not deliver more
 // than 5V or 3.3V, depending on platform!
-#ifdef ARDUINO_ARCH_MBED
-PinName pin = p2;
-#else
-PinName pin = D2;
-#endif
-
-CarreraDigitalControlUnit cu(pin);
+CarreraDigitalControlUnit cu(DIGITAL_PIN(2));
 
 bool show_normal_operation = true;
 
 void setup() {
+#ifdef ARDUINO
+    Serial.begin(115200);
+#endif
     cu.start();
 }
 

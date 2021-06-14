@@ -12,3 +12,4 @@ env:
 script:
 - platformio ci --lib="src" --board=nucleo_f446re -O framework=mbed
 - platformio ci --lib="src" --board=pico -O framework=arduino
+- platformio ci --lib="src" --board=uno

@@ -15,8 +15,58 @@
 */
 #include "CarreraDigitalControlUnit.h"
 
-#ifdef MBED_VERSION
+#if defined(MBED_VERSION)
+
 #include "platform/mbed_critical.h"
+
+static inline void critical_section_enter()
+{
+    core_util_critical_section_enter();
+}
+
+static inline void critical_section_exit()
+{
+    core_util_critical_section_exit();
+}
+
+static inline bool compare_and_swap(volatile uint16_t* ptr, uint16_t expected, uint16_t desired)
+{
+    return core_util_atomic_cas_u16(ptr, &expected, desired);
+}
+
+#elif defined(ARDUINO)
+
+static unsigned critical_section_depth = 0;
+
+static inline void critical_section_enter()
+{
+    noInterrupts();
+    ++critical_section_depth;
+}
+
+static inline void critical_section_exit()
+{
+    if (--critical_section_depth == 0) {
+        interrupts();
+    }
+}
+
+static bool compare_and_swap(volatile uint16_t* ptr, uint16_t expected, uint16_t desired)
+{
+    bool result = false;
+    critical_section_enter();
+    if (*ptr == expected) {
+        *ptr = desired;
+        result = true;
+    }
+    critical_section_exit();
+    return result;
+}
+
+#else
+
+#error "This library works only on mbed and Arduino platforms."
+
 #endif
 
 static const uint16_t emit_mask[10] = {
@@ -32,14 +82,6 @@ static const uint16_t emit_mask[10] = {
     1 << 9
 };
 
-static unsigned rev12(unsigned data)
-{
-    data = ((data & 0x555) << 1) | ((data >> 1) & 0x555);
-    data = ((data & 0x333) << 2) | ((data >> 2) & 0x333);
-    data = ((data & 0xf00) >> 8) | (data & 0x0f0) | ((data & 0x00f) << 8);
-    return data;
-}
-
 static uint8_t rev8(uint8_t data)
 {
     data = ((data & 0x55) << 1) | ((data >> 1) & 0x55);
@@ -48,15 +90,45 @@ static uint8_t rev8(uint8_t data)
     return data;
 }
 
-#ifdef ARDUINO
-CarreraDigitalControlUnit::CarreraDigitalControlUnit(int pin, bool inverted)
-    : _irq(digitalPinToPinName(pin)), _data(0), _inverted(inverted), _running(false)
+static unsigned rev12(unsigned data)
 {
-
+    data = ((data & 0x555) << 1) | ((data >> 1) & 0x555);
+    data = ((data & 0x333) << 2) | ((data >> 2) & 0x333);
+    data = ((data & 0xf00) >> 8) | (data & 0x0f0) | ((data & 0x00f) << 8);
+    return data;
 }
-CarreraDigitalControlUnit::CarreraDigitalControlUnit(int pin, int mode, bool inverted)
+
+#ifdef ARDUINO
+
+static CarreraDigitalControlUnit* instance = 0;
+
+CarreraDigitalControlUnit::CarreraDigitalControlUnit(int pin, bool inverted)
+#ifdef ARDUINO_ARCH_MBED
     : _irq(digitalPinToPinName(pin)), _data(0), _inverted(inverted), _running(false)
+#else
+    : _pin(pin), _data(0), _inverted(inverted), _running(false)
+#endif
 {
+#ifdef __AVR
+    _ireg = portInputRegister(digitalPinToPort(pin));
+    _mask = digitalPinToBitMask(pin);
+#endif
+    pinMode(pin, INPUT);
+    instance = this;
+}
+
+CarreraDigitalControlUnit::CarreraDigitalControlUnit(int pin, int mode, bool inverted)
+#ifdef ARDUINO_ARCH_MBED
+    : _irq(digitalPinToPinName(pin)), _data(0), _inverted(inverted), _running(false)
+#else
+    : _pin(pin), _data(0), _inverted(inverted), _running(false)
+#endif
+{
+#ifdef __AVR
+    _ireg = portInputRegister(digitalPinToPort(pin));
+    _mask = digitalPinToBitMask(pin);
+#endif
+#ifdef ARDUINO_ARCH_MBED
     switch (mode) {
     case INPUT:
         _irq.mode(PullNone);
@@ -65,11 +137,16 @@ CarreraDigitalControlUnit::CarreraDigitalControlUnit(int pin, int mode, bool inv
         _irq.mode(PullUp);
         break;
     case INPUT_PULLDOWN:
-    default:  // FIXME: really?
+    default:
         _irq.mode(PullDown);
         break;
     }
+#else
+    pinMode(pin, mode);
+#endif
+    instance = this;
 }
+
 #endif
 
 #ifdef MBED_VERSION
@@ -86,9 +163,10 @@ CarreraDigitalControlUnit::CarreraDigitalControlUnit(PinName pin, PinMode mode, 
 
 void CarreraDigitalControlUnit::start()
 {
-    core_util_critical_section_enter();
+    critical_section_enter();
     if (!_running) {
         reset();
+#ifdef MBED_VERSION
         if (_inverted) {
             _irq.rise(mbed::callback(this, &CarreraDigitalControlUnit::fall));
             _irq.fall(mbed::callback(this, &CarreraDigitalControlUnit::rise));
@@ -97,31 +175,38 @@ void CarreraDigitalControlUnit::start()
             _irq.fall(mbed::callback(this, &CarreraDigitalControlUnit::fall));
         }
         _timer.start();
+#else
+        attachInterrupt(digitalPinToInterrupt(_pin), &irq, CHANGE);
+#endif
         _running = true;
     }
-    core_util_critical_section_exit();
+    critical_section_exit();
 }
 
 void CarreraDigitalControlUnit::stop()
 {
-    core_util_critical_section_enter();
+    critical_section_enter();
     if (_running) {
+#ifdef MBED_VERSION
         _timer.stop();
         _irq.rise(0);
         _irq.fall(0);
+#else
+        detachInterrupt(digitalPinToInterrupt(_pin));
+#endif
         _running = false;
     }
-    core_util_critical_section_exit();
+    critical_section_exit();
 }
 
 void CarreraDigitalControlUnit::reset()
 {
-    core_util_critical_section_enter();
+    critical_section_enter();
     _time = 0;
     _buffer = 0;
     _index = 0;
     _data = 0;
-    core_util_critical_section_exit();
+    critical_section_exit();
 }
 
 int CarreraDigitalControlUnit::read()
@@ -129,7 +214,7 @@ int CarreraDigitalControlUnit::read()
     uint16_t data;
     do {
         data = _data;
-    } while (!data || !core_util_atomic_cas_u16(&_data, &data, 0));
+    } while (!data || !compare_and_swap(&_data, data, 0));
     return data;
 }
 
@@ -138,7 +223,7 @@ int CarreraDigitalControlUnit::read(uint32_t timeout_us)
     // read(0) should return data if available
     uint32_t start = time_us();
     uint16_t data = _data;
-    while (!data || !core_util_atomic_cas_u16(&_data, &data, 0)) {
+    while (!data || !compare_and_swap(&_data, data, 0)) {
         if ((time_us() - start) > timeout_us) {
             return -1;
         }
@@ -198,8 +283,28 @@ void CarreraDigitalControlUnit::rise()
 
 uint32_t CarreraDigitalControlUnit::time_us()
 {
-    return _timer.read_us();
+#ifdef MBED_VERSION
+    return _timer.elapsed_time().count();
+#else
+    return micros();
+#endif
 }
+
+#ifndef MBED_VERSION
+void CarreraDigitalControlUnit::irq()
+{
+#ifdef __AVR
+    uint8_t value = *instance->_ireg & instance->_mask;
+#else
+    int value = digitalRead(instance->_pin);
+#endif
+    if (instance->_inverted ? !value : value) {
+        instance->rise();
+    } else {
+        instance->fall();
+    }
+}
+#endif
 
 bool CarreraDigitalControlUnit::parse_prog(int data, uint8_t res[3])
 {
