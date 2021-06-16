@@ -1,9 +1,10 @@
-0.7.0 (UNRELEASED)
+0.7.0 (2021-06-16)
 ------------------
 
 - Add support for `ARDUINO_ARCH_MBED`, e.g. Raspberry Pi Pico.
 
 - No longer require `mbino` library on Arduino.
+
 
 0.6.2 (2017-12-16)
 ------------------
