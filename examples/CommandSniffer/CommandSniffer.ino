@@ -15,7 +15,15 @@
 */
 #include "CarreraDigitalControlUnit.h"
 
-#include "compat.h"
+#if !defined(ARDUINO)
+#define DIGITAL_PIN(n) (D ## n)
+#elif defined(ARDUINO_ARCH_MBED)
+#define DIGITAL_PIN(n) (p ## n)
+REDIRECT_STDOUT_TO(Serial);
+#else
+#define DIGITAL_PIN(n) (n)
+#define printf(...) { char buf[80]; sprintf(buf, __VA_ARGS__); Serial.print(buf); }
+#endif
 
 // use digital pin #2 as input - make sure it does not deliver more
 // than 5V or 3.3V, depending on platform!

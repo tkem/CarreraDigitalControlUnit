@@ -1,5 +1,5 @@
 /*
-   Copyright 2017 Thomas Kemmer
+   Copyright 2017, 2021 Thomas Kemmer
 
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
@@ -15,57 +15,69 @@
 */
 #include "CarreraDigitalControlUnit.h"
 
-#include <mbed.h>
+#if !defined(ARDUINO)
+#define DIGITAL_PIN(n) (D ## n)
+#elif defined(ARDUINO_ARCH_MBED)
+#define DIGITAL_PIN(n) (p ## n)
+REDIRECT_STDOUT_TO(Serial);
+#else
+#define DIGITAL_PIN(n) (n)
+#define printf(...) { char buf[80]; sprintf(buf, __VA_ARGS__); Serial.print(buf); }
+#define putchar(c) Serial.write(c)
+#define puts(s) Serial.println(s)
+#define fputs(s, file) Serial.print(s)
+#endif
 
 // printf() is fine for debugging, but we need something more
 // efficient here...
 class DataLogger {
-    RawSerial _serial;
-
 public:
-    DataLogger(PinName tx, PinName rx, long baud) : _serial(tx, rx, baud) {}
-
+    DataLogger() {}
+    
     DataLogger& operator<<(const char* s) {
-        _serial.puts(s);
+        fputs(s, stdout);
         return *this;
     }
 
     DataLogger& operator<<(bool f) {
-        _serial.putc(f ? '1' : '0');
+        putchar(f ? '1' : '0');
         return *this;
     }
 
     DataLogger& operator<<(uint8_t v) {
         if (v >= 100) {
-            _serial.putc('0' + v / 100);
+            putchar('0' + v / 100);
             v %= 100;
         }
         if (v >= 10) {
-            _serial.putc('0' + v / 10);
+            putchar('0' + v / 10);
             v %= 10;
         }
-        _serial.putc('0' + v);
+        putchar('0' + v);
         return *this;
     }
 
     DataLogger& operator<<(uint16_t v) {
         static const char hex[] = "0123456789abcdef";
-        _serial.putc(hex[(v >> 12) & 0xf]);
-        _serial.putc(hex[(v >> 8) & 0xf]);
-        _serial.putc(hex[(v >> 4) & 0xf]);
-        _serial.putc(hex[v & 0xf]);
-        _serial.putc('h');  // hex
+        putchar(hex[(v >> 12) & 0xf]);
+        putchar(hex[(v >> 8) & 0xf]);
+        putchar(hex[(v >> 4) & 0xf]);
+        putchar(hex[v & 0xf]);
+        putchar('h');  // hex
         return *this;
     }
 };
 
-DataLogger out(USBTX, USBRX, 115200);
+DataLogger out;
 
 // set digital pin 2 as input - make sure it does not deliver more
 // than 5V or 3.3V, depending on platform!
-CarreraDigitalControlUnit cu(D2);
+CarreraDigitalControlUnit cu(DIGITAL_PIN(2));
 
 void setup() {
+#ifdef ARDUINO
+    Serial.begin(115200);
+#endif
     cu.start();
 }
 
@@ -74,7 +86,6 @@ void loop() {
     int data = cu.read(100000);  // 100ms timeout
     if (data < 0) {
         out << "Timeout\r\n";
-        wait(1);
         cu.reset();
     } else if (cu.parse_prog(data, values)) {
         // prog := { command, value, address }
@@ -112,7 +123,6 @@ void loop() {
             << "\r\n";
     } else {
         out << uint16_t(data) << " [???]\r\n";
-        wait(1);
         cu.reset();  // probably lost sync
     }
 }

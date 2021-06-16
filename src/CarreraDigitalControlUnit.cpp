@@ -15,6 +15,10 @@
 */
 #include "CarreraDigitalControlUnit.h"
 
+#ifdef ARDUINO_ARCH_MBED
+#include <pinDefinitions.h>
+#endif
+
 #if defined(MBED_VERSION)
 
 #include "platform/mbed_critical.h"

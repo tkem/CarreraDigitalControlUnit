@@ -10,7 +10,6 @@ cache:
 env:
 - PLATFORMIO_CI_SRC=examples/CommandSniffer
 - PLATFORMIO_CI_SRC=examples/DataLogger
-- PLATFORMIO_CI_SRC=examples/LapCounter
 - PLATFORMIO_CI_SRC=examples/StartLight
 
 install:
