@@ -1,4 +1,4 @@
-# CarreraDigitalControlUnit  [![Build Status](https://travis-ci.org/tkem/CarreraDigitalControlUnit.svg?branch=master)](https://travis-ci.org/tkem/CarreraDigitalControlUnit/)
+# CarreraDigitalControlUnit  [![Build Status](https://travis-ci.com/tkem/CarreraDigitalControlUnit.svg?branch=master)](https://travis-ci.com/tkem/CarreraDigitalControlUnit/)
 
 This is a cross-platform library for Arduino and mbed OS for
 interfacing a microcontroller board with the Carrera® DIGITAL 124/132

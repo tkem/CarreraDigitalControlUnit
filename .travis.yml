@@ -1,7 +1,11 @@
 language: python
 
-install:
-- pip install -U platformio
+sudo: false
+
+cache:
+  directories:
+    - "~/.platformio"
+    - $HOME/.cache/pip
 
 env:
 - PLATFORMIO_CI_SRC=examples/CommandSniffer
@@ -9,7 +13,11 @@ env:
 - PLATFORMIO_CI_SRC=examples/LapCounter
 - PLATFORMIO_CI_SRC=examples/StartLight
 
+install:
+- pip install -U platformio
+- pio update
+
 script:
-- platformio ci --lib="src" --board=nucleo_f446re -O framework=mbed
-- platformio ci --lib="src" --board=pico -O framework=arduino
-- platformio ci --lib="src" --board=uno
+- pio ci --lib="src" --board=nucleo_f446re -O framework=mbed
+- pio ci --lib="src" --board=pico -O framework=arduino
+- pio ci --lib="src" --board=uno
