@@ -1,6 +1,6 @@
 # CarreraDigitalControlUnit  [![Build Status](https://travis-ci.org/tkem/CarreraDigitalControlUnit.svg?branch=master)](https://travis-ci.org/tkem/CarreraDigitalControlUnit/)
 
-This is a cross-platform library for Arduino and mbed OS 5 for
+This is a cross-platform library for Arduino and mbed OS for
 interfacing a microcontroller board with the Carrera® DIGITAL 124/132
 slot car racing system.  Data transmission uses a single pair of wires
 connected directly to the slot car tracks.  Be aware, though, that the
@@ -14,29 +14,24 @@ polarity protection diode will do:
 |:---:|
 | Image by [Peter Niehues](http://www.wasserstoffe.de/carrera-hacks/) [[CC BY-NC-SA](https://creativecommons.org/licenses/by-nc-sa/3.0/)] |
 
-For cross-platform support, the [mbino](https://github.com/tkem/mbino)
-library must be installed when compiling for Arduino.
-
 This project is still at an early stage and documentation leaves a lot
 to be desired, so you best have a look at the existing
 [examples](examples) for now.  To make the most out of this, you
-should also make yourself familiar with the [CU data
+might also want to make yourself somewhat familiar with the [CU data
 protocol](http://slotbaer.de/carrera-digital-124-132/9-cu-daten-protokoll.html)
 (available in German only).
 
 
 ## License
 
-Copyright (c) 2017 Thomas Kemmer.
+Copyright (c) 2017, 2021 Thomas Kemmer.
 
-Licensed under the [Apache License, Version
-2.0](http://www.apache.org/licenses/LICENSE-2.0).
+Licensed under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0).
 
-Carrera® is a registered trademark of Stadlbauer Marketing + Vertrieb
-GmbH.
+Carrera® is a registered trademark of [Carrera Toys GmbH](https://carrera-toys.com/).
 
 This is not an official Carrera® product, and is not affiliated with
-or endorsed by Stadlbauer Marketing + Vertrieb GmbH.
+or endorsed by Carrera Toys GmbH.
 
 Thanks to [Stephan Heß](http://www.slotbaer.de/) and [Peter
 Niehues](http://www.wasserstoffe.de/carrera-hacks/) for doing all the
