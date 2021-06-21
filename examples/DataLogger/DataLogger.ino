@@ -20,11 +20,13 @@
 #elif defined(ARDUINO_ARCH_MBED)
 #define DIGITAL_PIN(n) (p ## n)
 REDIRECT_STDOUT_TO(Serial);
+#elif defined(ARDUINO_ARCH_ESP8266)
+#define DIGITAL_PIN(n) (D ## n)
+#define fputc(c, file) Serial.write(char(c))
+#define fputs(s, file) Serial.print(s)
 #else
 #define DIGITAL_PIN(n) (n)
-#define printf(...) { char buf[80]; sprintf(buf, __VA_ARGS__); Serial.print(buf); }
-#define putchar(c) Serial.write(c)
-#define puts(s) Serial.println(s)
+#define fputc(c, file) Serial.write(char(c))
 #define fputs(s, file) Serial.print(s)
 #endif
 
@@ -40,30 +42,30 @@ public:
     }
 
     DataLogger& operator<<(bool f) {
-        putchar(f ? '1' : '0');
+        fputc(f ? '1' : '0', stdout);
         return *this;
     }
 
     DataLogger& operator<<(uint8_t v) {
         if (v >= 100) {
-            putchar('0' + v / 100);
+            fputc('0' + v / 100, stdout);
             v %= 100;
         }
         if (v >= 10) {
-            putchar('0' + v / 10);
+            fputc('0' + v / 10, stdout);
             v %= 10;
         }
-        putchar('0' + v);
+        fputc('0' + v, stdout);
         return *this;
     }
 
     DataLogger& operator<<(uint16_t v) {
         static const char hex[] = "0123456789abcdef";
-        putchar(hex[(v >> 12) & 0xf]);
-        putchar(hex[(v >> 8) & 0xf]);
-        putchar(hex[(v >> 4) & 0xf]);
-        putchar(hex[v & 0xf]);
-        putchar('h');  // hex
+        fputc(hex[(v >> 12) & 0xf], stdout);
+        fputc(hex[(v >> 8) & 0xf], stdout);
+        fputc(hex[(v >> 4) & 0xf], stdout);
+        fputc(hex[v & 0xf], stdout);
+        fputc('h', stdout);  // hex
         return *this;
     }
 };

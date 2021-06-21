@@ -20,6 +20,8 @@
 #elif defined(ARDUINO_ARCH_MBED)
 #define DIGITAL_PIN(n) (p ## n)
 REDIRECT_STDOUT_TO(Serial);
+#elif defined(ARDUINO_ARCH_ESP8266)
+#define DIGITAL_PIN(n) (D ## n)
 #else
 #define DIGITAL_PIN(n) (n)
 #define printf(...) { char buf[80]; sprintf(buf, __VA_ARGS__); Serial.print(buf); }

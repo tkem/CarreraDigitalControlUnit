@@ -19,6 +19,12 @@
 #include <pinDefinitions.h>
 #endif
 
+#ifdef ARDUINO_ARCH_ESP8266
+#define CU_IRQ_HANDLER IRAM_ATTR
+#else
+#define CU_IRQ_HANDLER
+#endif
+
 #if defined(MBED_VERSION)
 
 #include "platform/mbed_critical.h"
@@ -236,7 +242,7 @@ int CarreraDigitalControlUnit::read(uint32_t timeout_us)
     return data;
 }
 
-void CarreraDigitalControlUnit::emit()
+void CU_IRQ_HANDLER CarreraDigitalControlUnit::emit()
 {
     _data = _buffer;
     _buffer = 0;
@@ -245,7 +251,7 @@ void CarreraDigitalControlUnit::emit()
     }
 }
 
-void CarreraDigitalControlUnit::fall()
+void CU_IRQ_HANDLER CarreraDigitalControlUnit::fall()
 {
     // we expect 7.5ms between data packets, so unsigned int should be
     // wide enough on any platform and a little more efficient on AVR...
@@ -272,7 +278,7 @@ void CarreraDigitalControlUnit::fall()
     }
 }
 
-void CarreraDigitalControlUnit::rise()
+void CU_IRQ_HANDLER CarreraDigitalControlUnit::rise()
 {
     unsigned t = time_us();
     unsigned d = t - _time;
@@ -295,7 +301,7 @@ uint32_t CarreraDigitalControlUnit::time_us()
 }
 
 #ifndef MBED_VERSION
-void CarreraDigitalControlUnit::irq()
+void CU_IRQ_HANDLER CarreraDigitalControlUnit::irq()
 {
 #ifdef __AVR
     uint8_t value = *instance->_ireg & instance->_mask;

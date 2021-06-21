@@ -17,6 +17,5 @@ install:
 - pio update
 
 script:
-- pio ci -v --lib="src" --board=nucleo_f446re -O framework=mbed
-- pio ci -v --lib="src" --board=pico -O framework=arduino
-- pio ci -v --lib="src" --board=uno
+- pio ci -v -l src -O framework=arduino -b uno -b pico -b nodemcuv2
+- pio ci -v -l src -O framework=mbed -b nucleo_f446re
