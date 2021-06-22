@@ -15,21 +15,22 @@
 */
 #include "CarreraDigitalControlUnit.h"
 
+// use digital pin #2 as input - make sure it does not deliver more
+// than 5V or 3.3V, depending on platform!
+
 #if !defined(ARDUINO)
-#define DIGITAL_PIN(n) (D ## n)
+PinName cuPin = D2;
 #elif defined(ARDUINO_ARCH_MBED)
-#define DIGITAL_PIN(n) (p ## n)
+PinName cuPin = p2;
 REDIRECT_STDOUT_TO(Serial);
 #elif defined(ARDUINO_ARCH_ESP8266)
-#define DIGITAL_PIN(n) (D ## n)
+int cuPin = D2;
 #else
-#define DIGITAL_PIN(n) (n)
+int cuPin = 2;
 #define printf(...) { char buf[80]; sprintf(buf, __VA_ARGS__); Serial.print(buf); }
 #endif
 
-// use digital pin #2 as input - make sure it does not deliver more
-// than 5V or 3.3V, depending on platform!
-CarreraDigitalControlUnit cu(DIGITAL_PIN(2));
+CarreraDigitalControlUnit cu(cuPin);
 
 bool show_normal_operation = true;
 

@@ -15,20 +15,25 @@
 */
 #include "CarreraDigitalControlUnit.h"
 
+// use digital pin 2 as input - make sure it does not deliver more
+// than 5V or 3.3V, depending on platform!
+
 #if !defined(ARDUINO)
-#define DIGITAL_PIN(n) (D ## n)
+PinName cuPin = D2;
 #elif defined(ARDUINO_ARCH_MBED)
-#define DIGITAL_PIN(n) (p ## n)
+PinName cuPin = p2;
 REDIRECT_STDOUT_TO(Serial);
 #elif defined(ARDUINO_ARCH_ESP8266)
-#define DIGITAL_PIN(n) (D ## n)
+int cuPin = D2;
 #define fputc(c, file) Serial.write(char(c))
 #define fputs(s, file) Serial.print(s)
 #else
-#define DIGITAL_PIN(n) (n)
+int cuPin = 2;
 #define fputc(c, file) Serial.write(char(c))
 #define fputs(s, file) Serial.print(s)
 #endif
+
+CarreraDigitalControlUnit cu(cuPin);
 
 // printf() is fine for debugging, but we need something more
 // efficient here...
@@ -71,10 +76,6 @@ public:
 };
 
 DataLogger out;
-
-// set digital pin 2 as input - make sure it does not deliver more
-// than 5V or 3.3V, depending on platform!
-CarreraDigitalControlUnit cu(DIGITAL_PIN(2));
 
 void setup() {
 #ifdef ARDUINO
