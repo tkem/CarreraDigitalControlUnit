@@ -16,10 +16,11 @@
 #ifndef CARRERA_DIGITAL_CONTROL_UNIT_H
 #define CARRERA_DIGITAL_CONTROL_UNIT_H
 
-#if defined(ARDUINO)
+#ifdef ARDUINO
 #include <Arduino.h>
 #endif
-#if !defined(ARDUINO) || defined(ARDUINO_ARCH_MBED)
+
+#ifdef __MBED__
 #include <mbed.h>
 #endif
 
@@ -52,7 +53,7 @@ public:
     CarreraDigitalControlUnit(int pin, int mode, bool inverted);
 #endif
 
-#ifdef MBED_VERSION
+#ifdef __MBED__
     /** Create a connection to a ControlUnit using the specified pin
      *
      * @param pin A digital input connected to the Control Unit
@@ -181,7 +182,7 @@ private:
     void fall();
     void rise();
     uint32_t time_us();
-#ifdef MBED_VERSION
+#ifdef __MBED__
     mbed::InterruptIn _irq;
     mbed::Timer _timer;
 #else

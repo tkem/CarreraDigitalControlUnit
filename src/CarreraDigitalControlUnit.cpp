@@ -25,7 +25,7 @@
 #define CU_IRQ_HANDLER
 #endif
 
-#if defined(MBED_VERSION)
+#if defined(__MBED__)
 
 #include "platform/mbed_critical.h"
 
@@ -123,7 +123,6 @@ CarreraDigitalControlUnit::CarreraDigitalControlUnit(int pin, bool inverted)
     _ireg = portInputRegister(digitalPinToPort(pin));
     _mask = digitalPinToBitMask(pin);
 #endif
-    pinMode(pin, INPUT);
     instance = this;
 }
 
@@ -159,7 +158,7 @@ CarreraDigitalControlUnit::CarreraDigitalControlUnit(int pin, int mode, bool inv
 
 #endif
 
-#ifdef MBED_VERSION
+#ifdef __MBED__
 CarreraDigitalControlUnit::CarreraDigitalControlUnit(PinName pin, bool inverted)
     : _irq(pin), _data(0), _inverted(inverted), _running(false)
 {
@@ -176,7 +175,7 @@ void CarreraDigitalControlUnit::start()
     critical_section_enter();
     if (!_running) {
         reset();
-#ifdef MBED_VERSION
+#ifdef __MBED__
         if (_inverted) {
             _irq.rise(mbed::callback(this, &CarreraDigitalControlUnit::fall));
             _irq.fall(mbed::callback(this, &CarreraDigitalControlUnit::rise));
@@ -197,7 +196,7 @@ void CarreraDigitalControlUnit::stop()
 {
     critical_section_enter();
     if (_running) {
-#ifdef MBED_VERSION
+#ifdef __MBED__
         _timer.stop();
         _irq.rise(0);
         _irq.fall(0);
@@ -293,14 +292,14 @@ void CU_IRQ_HANDLER CarreraDigitalControlUnit::rise()
 
 uint32_t CarreraDigitalControlUnit::time_us()
 {
-#ifdef MBED_VERSION
+#ifdef __MBED__
     return _timer.elapsed_time().count();
 #else
     return micros();
 #endif
 }
 
-#ifndef MBED_VERSION
+#ifndef __MBED__
 void CU_IRQ_HANDLER CarreraDigitalControlUnit::irq()
 {
 #ifdef __AVR

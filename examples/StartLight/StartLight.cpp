@@ -20,7 +20,7 @@
 #include <mbed.h>
 
 // set digital pin #2 as input - make sure it does not deliver more
-// than 5V or 3.3V, depending on platform!
+// than 3.3V!
 CarreraDigitalControlUnit cu(D2);
 
 // set digital pins 3 to 7 as outputs (connected to LEDs)
