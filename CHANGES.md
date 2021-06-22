@@ -1,3 +1,11 @@
+0.7.1 (2021-06-22)
+------------------
+
+- Add NodeMCU (Espressif 8266) support.
+
+- Various minor improvements.
+
+
 0.7.0 (2021-06-16)
 ------------------
 
