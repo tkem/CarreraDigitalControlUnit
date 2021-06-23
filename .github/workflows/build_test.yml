@@ -21,15 +21,6 @@ jobs:
       fail-fast: false
       matrix:
         src: [examples/CommandSniffer, examples/DataLogger, examples/StartLight]
-        include:
-          - framework: mbed
-            board: nucleo_f44re
-          - framework: arduino
-            board: uno
-          - framework: arduino
-            board: pico
-          - framework: arduino
-            board: nodemcuv2
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -43,6 +34,14 @@ jobs:
           pio update
 
       # Compile Test-Projects
-      - name: Compile
+      - name: Compile MBED
         run: |
-          pio ci -v -l ${{ matrix.src }} -O ${{ matrix.framework }} -b ${{ matrix.board }} 
+          pio ci -v -l ${{ matrix.src }} -O mbed -b nucleo_f44re
+      - env:
+          PLATFORMIO_CI_SRC: ${{ matrix.src }}
+      # Compile Test-Projects
+      - name: Compile Arduino
+        run: |
+          pio ci -v -l ${{ matrix.src }} -O arduino -b uno -b pico -b nodemcuv2
+      - env:
+          PLATFORMIO_CI_SRC: ${{ matrix.src }}
