@@ -21,8 +21,6 @@ jobs:
       fail-fast: false
       matrix:
         src: [examples/CommandSniffer, examples/DataLogger, examples/StartLight]
-        framework: [""]
-        board: [""]
         include:
           - framework: mbed
             board: nucleo_f44re
