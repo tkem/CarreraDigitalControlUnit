@@ -1,4 +1,4 @@
-# CarreraDigitalControlUnit  ![build](https://github.com/quotschmacher/CarreraDigitalControlUnit/actions/workflows/build_tests.yml/badge.svg?branch=github_ci)
+# CarreraDigitalControlUnit  ![build](https://github.com/tkem/CarreraDigitalControlUnit/actions/workflows/build_test.yml/badge.svg)
 
 This is a cross-platform library for Arduino and mbed OS for
 interfacing a microcontroller board with the Carrera® DIGITAL 124/132
