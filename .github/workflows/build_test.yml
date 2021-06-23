@@ -36,12 +36,12 @@ jobs:
       # Compile Test-Projects
       - name: Compile MBED
         run: |
-          pio ci -v -l ${{ matrix.src }} -O mbed -b nucleo_f44re
+          pio ci -v -l ${{ matrix.src }} -O framework=mbed -b nucleo_f44re
         env:
           PLATFORMIO_CI_SRC: ${{ matrix.src }}
       # Compile Test-Projects
       - name: Compile Arduino
         run: |
-          pio ci -v -l ${{ matrix.src }} -O arduino -b uno -b pico -b nodemcuv2
+          pio ci -v -l ${{ matrix.src }} -O framework=arduino -b uno -b pico -b nodemcuv2
         env:
           PLATFORMIO_CI_SRC: ${{ matrix.src }}
