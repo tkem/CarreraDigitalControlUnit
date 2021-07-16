@@ -98,85 +98,6 @@ public:
      */
     int read(uint32_t timeout_us);
 
-    /** Split a programming data word into its components
-     *
-     * If successfull, res will contain the following
-     *
-     * - res[0]  The programming command (0..31)
-     * - res[1]  The programming value (0..15)
-     * - res[2]  The programming address/controller (0..7)
-     *
-     * @param data The data word to split
-     *
-     * @param res The programming data word's components
-     *
-     * @returns true on success, false on error
-     */
-    static bool parse_prog(int data, uint8_t res[3]);
-
-    /** Split a controller data word into its components
-     *
-     * If successfull, res will contain the following
-     *
-     * - res[0]  The controller's address (0..5)
-     * - res[1]  The controller's speed (0..15)
-     * - res[2]  Whether the lange change button is pressed (0..1)
-     * - res[3]  Whether fuel mode is enabled (0..1)
-     *
-     * @param data The data word to split
-     *
-     * @param res The controller data word's components
-     *
-     * @returns true on success, false on error
-     */
-    static bool parse_ctrl(int data, uint8_t res[4]);
-
-    /** Split a pace/autonomous car data word into its components
-     *
-     * If successfull, res will contain the following
-     *
-     * - res[0]  Whether pace car and autonomous car are stopped (0..1)
-     * - res[1]  Whether the pace car should return to the box (0..1)
-     * - res[2]  Whether the pace car is active (0..1)
-     * - res[3]  Whether fuel mode is enabled (0..1)
-     *
-     * @param data The data word to split
-     *
-     * @param res The pace/autonomous car data word's components
-     *
-     * @returns true on success, false on error
-     */
-    static bool parse_pace(int data, uint8_t res[4]);
-
-    /** Split an active controller data word into its components
-     *
-     * If successfull, res will contain the following
-     *
-     * - res[0]  A bit mask representing active controllers (0..63)
-     * - res[1]  Whether any controller was active (0..1)
-     *
-     * @param data The data word to split
-     *
-     * @param res The active controller data word's components
-     *
-     * @returns true on success, false on error
-     */
-    static bool parse_act(int data, uint8_t res[2]);
-
-    /** Split an acknowledge data word into its components
-     *
-     * If successfull, res will contain the following
-     *
-     * - res[0]  A bit mask of time slots in which a message was received
-     *
-     * @param data The data word to split
-     *
-     * @param res The acknowledge data word's components
-     *
-     * @returns true on success, false on error
-     */
-    static bool parse_ack(int data, uint8_t res[1]);
-
 private:
     void emit();
     void fall();
@@ -199,6 +120,168 @@ private:
     unsigned _time;
     unsigned _buffer;
     unsigned _index;
+};
+
+/** A Carrera(R) Digital 124/132 controller data packet
+ */
+class CarreraControllerPacket {
+public:
+
+    /** Initialize with a value read from the Control Unit
+     */
+    CarreraControllerPacket(int data = 0) : _data(data) {}
+
+    /** The address (number) of the controller (0..5)
+     */
+    uint8_t address() const { return (_data >> 6) & 0x07; }
+
+    /** Whether the lane change button was pressed
+     */
+    bool laneChange() const { return (_data & 0x20) == 0; }
+
+    /** The throttle value (0..15)
+     */
+    uint8_t throttle() const { return (_data >> 1) & 0x0f; }
+
+    /** Whether fuel mode is enabled
+     */
+    bool fuelMode() const { return (_data & 0x01) != 0; }
+
+    /** Whether this is a valid controller data packet
+     */
+    explicit operator bool() const { return is(_data); }
+
+private:
+    static bool is(int data);  // TODO: make public? name?
+
+private:
+    uint16_t _data;
+};
+
+/** A Carrera(R) Digital 124/132 autonomous and pace car data packet
+ */
+class CarreraAutonomousPacket {
+public:
+
+    /** Initialize with a value read from the Control Unit
+     */
+    CarreraAutonomousPacket(int data = 0) : _data(data) {}
+
+    /** Whether autonomous and pace cars should stop
+     */
+    bool stopped() const { return (_data & 0x20) != 0; }
+
+    /** Whether pace car should return to the pit
+     */
+    bool paceCarIn() const { return (_data & 0x04) == 0; }
+
+    /** Whether the pace car is active
+     */
+    bool paceCarActive() const { return (_data & 0x02) != 0; }
+
+    /** Whether fuel mode is enabled
+     */
+    bool fuelMode() const { return (_data & 0x01) != 0; }
+
+    /** Whether this is a valid pace/autonomous car data packet
+     */
+    explicit operator bool() const { return is(_data); }
+
+private:
+    static bool is(int data);  // TODO: make public? name?
+
+private:
+    uint16_t _data;
+};
+
+/** A Carrera(R) Digital 124/132 activity data packet
+ */
+class CarreraActivityPacket {
+public:
+
+    /** Initialize with a value read from the Control Unit
+     */
+    CarreraActivityPacket(int data = 0) : _data(data) {}
+
+    /** Bit mask of active controllers (0..63)
+     */
+    uint8_t mask() const;
+
+    /** Whether any controller has been pressed
+     */
+    bool any() const { return (_data & 0x01) != 0; }
+
+    /** Whether this is a valid activity data packet
+     */
+    explicit operator bool() const { return is(_data); }
+
+private:
+    static bool is(int data);  // TODO: make public? name?
+
+private:
+    uint16_t _data;
+};
+
+/** A Carrera(R) Digital 124/132 acknowledge data packet
+ */
+class CarreraAcknowledgePacket {
+public:
+
+    /** Initialize with a value read from the Control Unit
+     */
+    CarreraAcknowledgePacket(int data = 0) : _data(data) {}
+
+    /** Bit mask of acknowledged time slots (0..255)
+     */
+    uint8_t mask() const;
+
+    /** Whether this is a valid acknowledge data packet
+     */
+    explicit operator bool() const { return is(_data); }
+
+private:
+    static bool is(int data);  // TODO: make public? name?
+
+private:
+    uint16_t _data;
+};
+
+/** A Carrera(R) Digital 124/132 command data packet
+ */
+class CarreraCommandPacket {
+public:
+
+    /** Initialize with a value read from the Control Unit
+     */
+    CarreraCommandPacket(int data = 0) : _data(data) {}
+
+    /** Command number (0..31)
+     */
+    uint8_t command() const {
+        return ((_data & 0x80) >> 7) | ((_data & 0x40) >> 5) | ((_data & 0x20) >> 3) | ((_data & 0x10) >> 1) | ((_data & 0x08) << 1);
+    }
+
+    /** Command address (0..7)
+     */
+    uint8_t address() const {
+        return ((_data & 1) << 2) | (_data & 2) | ((_data & 4) >> 2);
+    }
+
+    /** Value of the command (0..15)
+     */
+    uint8_t value() const {
+        return ((_data & 0x800) >> 11) | ((_data & 0x400) >> 9) | ((_data & 0x200) >> 7) | ((_data & 0x100) >> 5);
+    }
+
+    /** Whether this is a valid command data packet
+     */
+    explicit operator bool() const { return is(_data); }
+
+private:
+    static bool is(int data);  // TODO: make public? name?
+
+private:
+    uint16_t _data;
 };
 
 #endif

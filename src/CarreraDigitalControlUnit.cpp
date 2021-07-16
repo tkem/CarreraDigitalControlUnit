@@ -100,14 +100,6 @@ static uint8_t rev8(uint8_t data)
     return data;
 }
 
-static unsigned rev12(unsigned data)
-{
-    data = ((data & 0x555) << 1) | ((data >> 1) & 0x555);
-    data = ((data & 0x333) << 2) | ((data >> 2) & 0x333);
-    data = ((data & 0xf00) >> 8) | (data & 0x0f0) | ((data & 0x00f) << 8);
-    return data;
-}
-
 #ifdef ARDUINO
 
 static CarreraDigitalControlUnit* instance = 0;
@@ -315,66 +307,38 @@ void CU_IRQ_HANDLER CarreraDigitalControlUnit::irq()
 }
 #endif
 
-bool CarreraDigitalControlUnit::parse_prog(int data, uint8_t res[3])
+bool CarreraControllerPacket::is(int data)
 {
-    if ((data & ~0xfff) == 0x1000) {
-        // programming word is LSB
-        data = rev12(data);
-        res[0] = (data >> 4) & 0x1f;
-        res[1] = data & 0x0f;
-        res[2] = (data >> 9) & 0x07;
-        return true;
-    } else {
-        return false;
-    }
+    // TODO: simplify this?
+    return (data & ~0x1ff) == 0x200 && (data & ~0x3f) != 0x3c0;
 }
 
-bool CarreraDigitalControlUnit::parse_ctrl(int data, uint8_t res[4])
+bool CarreraAutonomousPacket::is(int data)
 {
-    if ((data & ~0x1ff) == 0x200 && (data >> 6) != 0xf) {
-        // controller word is MSB
-        res[0] = (data >> 6) & 0x7;
-        res[1] = (data >> 1) & 0xf;
-        res[2] = !(data & 0x20);
-        res[3] = data & 0x1;
-        return true;
-    } else {
-        return false;
-    }
+    return (data & ~0x3f) == 0x3c0;
 }
 
-bool CarreraDigitalControlUnit::parse_pace(int data, uint8_t res[4])
+bool CarreraActivityPacket::is(int data)
 {
-    if ((data & ~0x3f) == 0x3c0) {
-        res[0] = (data >> 5) & 0x1;
-        res[1] = (data >> 2) & 0x1;
-        res[2] = (data >> 1) & 0x1;
-        res[3] = data & 0x1;
-        return true;
-    } else {
-        return false;
-    }
+    return (data & ~0x7f) == 0x80;
 }
 
-bool CarreraDigitalControlUnit::parse_act(int data, uint8_t res[2])
+bool CarreraAcknowledgePacket::is(int data)
 {
-    if ((data & ~0x7f) == 0x80) {
-        // active controller mask is LSB
-        res[0] = rev8(data >> 1) >> 2;
-        res[1] = data & 0x1;
-        return true;
-    } else {
-        return false;
-    }
+    return (data & ~0xff) == 0x100;
 }
 
-bool CarreraDigitalControlUnit::parse_ack(int data, uint8_t res[1])
+bool CarreraCommandPacket::is(int data)
 {
-    if ((data & ~0xff) == 0x100) {
-        // acknowledge mask is LSB
-        res[0] = rev8(data);
-        return true;
-    } else {
-        return false;
-    }
+    return (data & ~0xfff) == 0x1000;
+}
+
+uint8_t CarreraActivityPacket::mask() const
+{
+    return rev8(_data >> 1) >> 2;
+}
+
+uint8_t CarreraAcknowledgePacket::mask() const
+{
+    return rev8(_data);
 }
