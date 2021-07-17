@@ -1,3 +1,14 @@
+0.8.0 (2021-07-17)
+------------------
+
+- Add protocol packet classes.
+
+- Add `LapCounter` example.
+
+- Breaking change: Remove static parse-to-byte-array methods from
+`CarreraDigitalControlUnit`.  Use protocl packet classes instead.
+
+
 0.7.1 (2021-06-22)
 ------------------
 
@@ -39,7 +50,7 @@
 0.5.0 (2017-10-01)
 ------------------
 
-Add `inverted` constructor argument.
+- Add `inverted` constructor argument.
 
 
 0.4.0 (2017-09-29)
