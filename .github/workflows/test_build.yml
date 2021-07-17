@@ -8,7 +8,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        src: [examples/CommandSniffer, examples/DataLogger, examples/StartLight]
+        src: [examples/CommandSniffer, examples/DataLogger, examples/LapCounter, examples/StartLight]
         framework: [mbed, arduino]
         include:
           - framework: mbed
