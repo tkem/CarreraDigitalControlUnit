@@ -22,6 +22,16 @@ protocol](http://slotbaer.de/carrera-digital-124-132/9-cu-daten-protokoll.html)
 (available in German only).
 
 
+## Installation (Arduino IDE)
+
+![Library Manager](https://user-images.githubusercontent.com/2833077/131675372-67169e0e-5bf7-4c42-a91b-7dffc607f9bb.png)
+
+1. In the Arduino IDE, navigate to Tools > Manage Libraries…
+1. The Library Manager window will open, and you will see a list of libraries that are currently installed or ready for installation.
+1. Search for "Carrera" using the search bar.
+1. Click on the item, optionally select a specific version, and install it.
+
+
 ## License
 
 Copyright (c) 2017, 2021 Thomas Kemmer.
