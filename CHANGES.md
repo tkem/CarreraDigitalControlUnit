@@ -1,3 +1,13 @@
+0.8.1 (2023-01-09)
+------------------
+
+- `badges/shields`: Change to GitHub workflow badge routes.
+
+- Move CI to GitHub Actions.
+
+- Documentation improvements.
+
+
 0.8.0 (2021-07-17)
 ------------------
 
