@@ -34,7 +34,7 @@ protocol](http://slotbaer.de/carrera-digital-124-132/9-cu-daten-protokoll.html)
 
 ## License
 
-Copyright (c) 2017, 2021 Thomas Kemmer.
+Copyright (c) 2017, 2021, 2023 Thomas Kemmer.
 
 Licensed under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0).
 
