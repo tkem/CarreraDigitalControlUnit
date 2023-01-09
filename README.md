@@ -1,4 +1,4 @@
-# CarreraDigitalControlUnit  [![CI build status](https://img.shields.io/github/workflow/status/tkem/CarreraDigitalControlUnit/CI)](https://github.com/tkem/CarreraDigitalControlUnit/actions)
+# CarreraDigitalControlUnit  [![CI build status](https://img.shields.io/github/actions/workflow/status/tkem/CarreraDigitalControlUnit/ci.yml)](https://github.com/tkem/CarreraDigitalControlUnit/actions/workflows/ci.yml)
 
 This is a cross-platform library for Arduino and mbed OS for
 interfacing a microcontroller board with the Carrera® DIGITAL 124/132
