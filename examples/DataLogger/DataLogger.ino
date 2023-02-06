@@ -85,9 +85,9 @@ void setup() {
 }
 
 void loop() {
-    int data = cu.read(100000);  // 100ms timeout
+    int data = cu.read(500000 /* 500ms timeout */);
     if (data < 0) {
-        out << "Timeout\r\n";
+        out << "Timeout reading from Control Unit\r\n";
         cu.reset();
     } else if (CarreraCommandPacket cmd = data) {
         out << uint16_t(data) << " CMD:"

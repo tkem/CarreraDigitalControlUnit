@@ -38,11 +38,12 @@ void setup() {
 #ifdef ARDUINO
     Serial.begin(115200);
 #endif
+    printf("Waiting for Control Unit...\r\n");
     cu.start();
 }
 
 void loop() {
-    if (CarreraCommandPacket packet = cu.read()) {
+    if (CarreraCommandPacket packet = cu.read(500000 /* 500ms timeout */)) {
         const unsigned command = packet.command();
         const unsigned value = packet.value();
         const unsigned address = packet.address();

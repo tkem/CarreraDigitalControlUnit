@@ -32,12 +32,12 @@ void setup() {
     pinMode(led3, OUTPUT);
     pinMode(led4, OUTPUT);
     pinMode(led5, OUTPUT);
-
     cu.start();
 }
 
 void loop() {
-    if (CarreraCommandPacket packet = cu.read()) {
+    int data = cu.read(500000 /* 500ms timeout */);
+    if (CarreraCommandPacket packet = data) {
         if (packet.command() == 16 && packet.address() == 7) {
             int value = packet.value();
             digitalWrite(led1, value >= 1);
@@ -46,5 +46,12 @@ void loop() {
             digitalWrite(led4, value >= 4);
             digitalWrite(led5, value >= 5);
         }
+    } else if (data < 0) {
+        int value = !digitalRead(led1);
+        digitalWrite(led1, value);
+        digitalWrite(led2, value);
+        digitalWrite(led3, value);
+        digitalWrite(led4, value);
+        digitalWrite(led5, value);
     }
 }
