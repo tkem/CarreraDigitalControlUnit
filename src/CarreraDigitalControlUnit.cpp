@@ -19,7 +19,7 @@
 #include <pinDefinitions.h>
 #endif
 
-#ifdef ARDUINO_ARCH_ESP8266
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
 #define CU_IRQ_HANDLER IRAM_ATTR
 #else
 #define CU_IRQ_HANDLER
@@ -176,6 +176,11 @@ void CarreraDigitalControlUnit::start()
             _irq.fall(mbed::callback(this, &CarreraDigitalControlUnit::fall));
         }
         _timer.start();
+#elif defined(ARDUINO_ARCH_ESP32)
+        // https://github.com/espressif/arduino-esp32/issues/7837
+        interrupts();
+        attachInterrupt(digitalPinToInterrupt(_pin), &irq, CHANGE);
+        noInterrupts();
 #else
         attachInterrupt(digitalPinToInterrupt(_pin), &irq, CHANGE);
 #endif
